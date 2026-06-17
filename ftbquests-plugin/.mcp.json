@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "ftbquests-bridge": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp-server/dist/index.js"],
+      "env": {
+        "FTBQUESTS_SERVER_DIR": "${FTBQUESTS_SERVER_DIR}"
+      }
+    }
+  }
+}
