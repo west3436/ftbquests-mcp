@@ -1,0 +1,54 @@
+# ftbquests — Claude Code plugin
+
+Author and edit **FTB Quests** content on a **live** Minecraft server from Claude Code. Changes are applied through the server's own quest APIs and broadcast to connected players in real time — so an admin can edit quests while playing.
+
+This plugin is the companion to the **`ftbquests-bridge`** mod (a loopback HTTP+JSON API inside the Minecraft server). The plugin ships:
+
+- an MCP server (`mcp-server/`) exposing `ftbq_*` tools that adapt to the bridge's HTTP API,
+- the `ftbquests` skill teaching the data model and authoring workflows,
+- slash commands `/ftbq-status` and `/ftbq-new-chapter`.
+
+## Requirements
+
+- A Minecraft **1.21.1** server (NeoForge or Fabric) running **FTB Quests** + **FTB Library** + **Architectury API** and the **`ftbquests-bridge`** mod.
+- **Node 18+** on the machine where Claude Code runs.
+
+## Setup
+
+1. **Install the mod.** Put `ftbquests-bridge` in the server's `mods/` alongside FTB Quests, FTB Library, and Architectury API. Start the server once — it generates `config/ftbquests-bridge/runtime.json` (the bridge port + auth token) and binds the API to `127.0.0.1` by default.
+2. **Build the MCP server.**
+   ```bash
+   cd mcp-server
+   npm install
+   npm run build
+   ```
+3. **Install this plugin** in Claude Code.
+4. **Point the plugin at the server.** Set the environment variable `FTBQUESTS_SERVER_DIR` to the server directory (the one containing `config/ftbquests-bridge/runtime.json`). Alternatively set `FTBQUESTS_BRIDGE_URL` + `FTBQUESTS_BRIDGE_TOKEN` directly.
+5. **Verify** with `/ftbq-status` — it should report `questsLoaded: true` and list your chapters.
+
+### The SSH'd-admin scenario
+
+Run Claude Code **on the server host** (e.g. over SSH) while connected to the same server in-game. The bridge is loopback-only, so co-location means the API is reachable and the credentials file is local — and your edits appear live in your own quest book.
+
+## Configuration (mod side: `config/ftbquests-bridge.json`)
+
+| key | default | meaning |
+|---|---|---|
+| `bindAddress` | `127.0.0.1` | interface to bind |
+| `port` | `25599` | API port |
+| `allowRemote` | `false` | permit non-loopback clients (still requires the token) |
+| `saveMode` | `immediate` | save to disk after each edit, or `lazy` |
+
+## Security
+
+- The API is **loopback-only by default** and always requires the bearer token from `runtime.json`.
+- Setting `allowRemote: true` lets non-loopback clients connect **with the token** — use only on a trusted network; it is logged loudly.
+- **Command rewards** (`ftbquests:command`) embed a server command that runs when a player claims them. The skill will confirm with you before creating one.
+
+## MCP registration note
+
+This plugin declares its MCP server in `.mcp.json` at the plugin root. If your Claude Code version expects MCP servers declared inside `.claude-plugin/plugin.json` instead, move the `mcpServers` block there. The MCP server must be built (`npm run build`) before first use.
+
+## Tools
+
+`ftbq_health`, `ftbq_search_registry`, `ftbq_list_task_types`, `ftbq_list_reward_types`, `ftbq_get_type_schema`, `ftbq_get_quest_map`, `ftbq_get_chapter`, `ftbq_get_object`, `ftbq_search_quests`, `ftbq_create_object`, `ftbq_edit_object`, `ftbq_delete_object`, `ftbq_set_dependency`, `ftbq_move_object`, `ftbq_save`.
