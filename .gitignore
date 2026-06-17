@@ -8,6 +8,9 @@ run/
 node_modules/
 dist/
 
+# Development planning docs (specs/plans) — kept locally, not version-controlled
+docs/superpowers/
+
 # Editor / OS
 .idea/
 .vscode/
