@@ -1,0 +1,16 @@
+# Java / Gradle (ftbquests-bridge mod)
+.gradle/
+build/
+run/
+*.class
+
+# Node / TypeScript (companion plugin)
+node_modules/
+dist/
+
+# Editor / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
