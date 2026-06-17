@@ -1,0 +1,34 @@
+---
+name: ftbquests
+description: Use when authoring or editing FTB Quests content on a running Minecraft server via the ftbquests-bridge MCP tools — creating/editing chapters, quests, tasks, rewards, reward tables, dependencies, and querying blocks/items/quest types.
+---
+
+# Authoring FTB Quests
+
+You edit a **live** server through the `ftbq_*` MCP tools. Every create/edit/delete is broadcast to connected players immediately — an admin watching in-game sees your changes in real time.
+
+## Orientation (do this first)
+1. `ftbq_health` — confirm `questsLoaded: true`.
+2. `ftbq_get_quest_map` — see chapter groups → chapters and reward tables.
+3. Drill in with `ftbq_get_chapter` / `ftbq_get_object`.
+
+## Core model (see references/data-model.md)
+- Hierarchy: **chapter group → chapter → quest → (tasks + rewards)**; plus **reward tables** and **quest links**.
+- **IDs are 16-char uppercase hex** strings. Top-level container id is `0000000000000001`.
+- Create with `ftbq_create_object`: `type` ∈ CHAPTER_GROUP | CHAPTER | QUEST | QUEST_LINK | TASK | REWARD | REWARD_TABLE.
+  - CHAPTER: put the group id in `extra.group`.
+  - QUEST: `parent` = chapter id.
+  - TASK / REWARD: `parent` = quest id, and `extra.type` = the type id (e.g. `ftbquests:item`).
+
+## Before creating a task or reward
+Call `ftbq_get_type_schema` for that type to learn its fields. The schema's `defaults` are authoritative (pack-aware, read live from the server). The curated notes in `references/` are a convenience, not a substitute. To find item/block ids, use `ftbq_search_registry`.
+
+## Discipline
+- Build in order: chapter group → chapter → quests → tasks/rewards → dependencies (`ftbq_set_dependency`) → positions (`ftbq_move_object`).
+- After a batch of edits, call `ftbq_save`.
+- Errors come back as `{error:{type,status,message}}` — read `message` and correct your input (e.g. wrong `parent`, unknown `type`, bad field). Common types: `bad_request`, `not_found`, `quests_not_loaded`, `server_busy`.
+
+## Safety
+A **command reward** (`ftbquests:command`) runs a server command when a player claims it. **Confirm with the user before creating a command reward** and show them the exact command.
+
+See: `references/data-model.md`, `references/task-types.md`, `references/reward-types.md`, `references/workflows.md`.
