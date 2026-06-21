@@ -1,0 +1,30 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "MIT"
+
+[[mods]]
+modId = "ftbqbridge"
+version = "${version}"
+displayName = "FTB Quests Bridge"
+description = "Loopback HTTP+JSON bridge for authoring FTB Quests content."
+
+[[dependencies.ftbqbridge]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.ftbqbridge]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1,1.22)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.ftbqbridge]]
+modId = "architectury"
+type = "required"
+versionRange = "[13.0,)"
+ordering = "AFTER"
+side = "BOTH"
