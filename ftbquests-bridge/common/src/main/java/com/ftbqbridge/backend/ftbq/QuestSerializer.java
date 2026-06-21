@@ -44,7 +44,7 @@ public final class QuestSerializer {
         JsonObject j = new JsonObject();
         j.addProperty("id", hex(o.id));
         j.addProperty("type", o.getObjectType().name());
-        j.addProperty("title", o.getTitle().getString());
+        j.addProperty("title", o.getRawTitle());
         return j;
     }
 

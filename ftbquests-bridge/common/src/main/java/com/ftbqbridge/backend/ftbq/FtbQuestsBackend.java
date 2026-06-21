@@ -58,12 +58,12 @@ public final class FtbQuestsBackend implements QuestBackend {
             for (ChapterGroup g : f.getChapterGroups()) {
                 JsonObject gj = new JsonObject();
                 gj.addProperty("id", QuestSerializer.hex(g.id));
-                gj.addProperty("title", g.getTitle().getString());
+                gj.addProperty("title", g.getRawTitle());
                 JsonArray chapters = new JsonArray();
                 for (Chapter c : g.getChapters()) {
                     JsonObject cj = new JsonObject();
                     cj.addProperty("id", QuestSerializer.hex(c.id));
-                    cj.addProperty("title", c.getTitle().getString());
+                    cj.addProperty("title", c.getRawTitle());
                     cj.addProperty("filename", c.getFilename());
                     cj.addProperty("questCount", c.getQuests().size());
                     chapters.add(cj);
@@ -107,7 +107,7 @@ public final class FtbQuestsBackend implements QuestBackend {
         return exec.call(() -> {
             JsonArray out = new JsonArray();
             ServerQuestFile.INSTANCE.forAllQuests(quest -> {
-                if (q.isEmpty() || quest.getTitle().getString().toLowerCase().contains(q.toLowerCase()))
+                if (q.isEmpty() || quest.getRawTitle().toLowerCase().contains(q.toLowerCase()))
                     out.add(QuestSerializer.objectSummary(quest));
             });
             return out;
