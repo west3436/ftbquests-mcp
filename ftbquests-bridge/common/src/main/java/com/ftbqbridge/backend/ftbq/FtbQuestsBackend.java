@@ -110,10 +110,14 @@ public final class FtbQuestsBackend implements QuestBackend {
         });
     }
 
-    // ---- Implemented in Tasks 10-12 ----
-    @Override public JsonArray searchRegistry(String k, String q, int l, int o) { throw ApiException.internal("not yet implemented"); }
-    @Override public JsonArray listTaskTypes()   { throw ApiException.internal("not yet implemented"); }
-    @Override public JsonArray listRewardTypes() { throw ApiException.internal("not yet implemented"); }
+    // ---- Task 10: registry + type enumeration ----
+    @Override public JsonArray searchRegistry(String kind, String query, int limit, int offset) {
+        return exec.call(() -> RegistryReader.search(kind, query, Math.min(Math.max(limit, 1), 500), Math.max(offset, 0)));
+    }
+    @Override public JsonArray listTaskTypes()   { return exec.call(RegistryReader::taskTypes); }
+    @Override public JsonArray listRewardTypes() { return exec.call(RegistryReader::rewardTypes); }
+
+    // ---- Implemented in Tasks 11-12 ----
     @Override public JsonObject typeSchema(String k, String t) { throw ApiException.internal("not yet implemented"); }
     @Override public JsonObject createObject(String t, String p, JsonObject props, JsonObject extra) { throw ApiException.internal("not yet implemented"); }
     @Override public JsonObject editObject(String id, JsonObject props) { throw ApiException.internal("not yet implemented"); }
