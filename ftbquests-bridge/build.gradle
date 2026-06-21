@@ -24,6 +24,11 @@ subprojects {
         maven { url "https://maven.architectury.dev/" }
         maven { url "https://maven.neoforged.net/releases/" }
         maven { url "https://maven.fabricmc.net/" }
+        maven { url "https://maven.ftb.dev/releases" } // FTB Quests + FTB Library + FTB Teams
+        maven {
+            url "https://cursemaven.com" // fallback for CurseForge-only artifacts
+            content { includeGroup "curse.maven" }
+        }
     }
 
     dependencies {
