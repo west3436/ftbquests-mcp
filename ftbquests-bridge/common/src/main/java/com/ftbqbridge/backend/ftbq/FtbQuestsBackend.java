@@ -40,14 +40,17 @@ public final class FtbQuestsBackend implements QuestBackend {
     }
 
     @Override public JsonObject health() {
-        return exec.call(() -> {
-            JsonObject o = new JsonObject();
-            o.addProperty("ok", true);
-            o.addProperty("questsLoaded", ServerQuestFile.INSTANCE != null);
-            o.addProperty("protocolVersion", Protocol.PROTOCOL_VERSION);
-            o.addProperty("loader", loaderName());
-            return o;
-        });
+        // Liveness probe: computed WITHOUT the server-thread executor on purpose. The executor's call()
+        // throws notLoaded()/503 when ServerQuestFile.INSTANCE is null and blocks on the server thread —
+        // but /health must answer 200 even while quests are still loading (reporting questsLoaded=false)
+        // and must stay responsive even if the server thread is busy. Reading the static INSTANCE
+        // reference for a null-check is safe enough for a health report.
+        JsonObject o = new JsonObject();
+        o.addProperty("ok", true);
+        o.addProperty("questsLoaded", ServerQuestFile.INSTANCE != null);
+        o.addProperty("protocolVersion", Protocol.PROTOCOL_VERSION);
+        o.addProperty("loader", loaderName());
+        return o;
     }
 
     @Override public JsonObject questMap() {

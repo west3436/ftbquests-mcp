@@ -24,8 +24,12 @@ public final class QuestSerializer {
 
     public static String hex(long id) { return String.format("%016X", id); }
     public static long parseHex(String s) {
-        String t = s.startsWith("#") ? s.substring(1) : s;
-        return Long.parseUnsignedLong(t, 16);
+        String t = s == null ? "" : (s.startsWith("#") ? s.substring(1) : s);
+        try {
+            return Long.parseUnsignedLong(t, 16);
+        } catch (NumberFormatException e) {
+            throw ApiException.badRequest("invalid id: " + s); // -> 400, not a generic 500
+        }
     }
 
     /** NBT -> Gson via DFU Dynamic conversion. */

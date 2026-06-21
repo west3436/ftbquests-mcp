@@ -4,6 +4,8 @@ import com.ftbqbridge.backend.ApiException;
 import com.ftbqbridge.backend.ServerTaskExecutor;
 import dev.ftb.mods.ftbquests.quest.ServerQuestFile;
 import net.minecraft.server.MinecraftServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.*;
 
@@ -15,6 +17,7 @@ import java.util.concurrent.*;
  * accessor on this build), and {@code ServerQuestFile.server} is the public {@link MinecraftServer}.
  */
 public final class MinecraftServerExecutor implements ServerTaskExecutor {
+    private static final Logger LOG = LoggerFactory.getLogger("ftbquests-bridge");
     private final long timeoutMs;
     public MinecraftServerExecutor(long timeoutMs) { this.timeoutMs = timeoutMs; }
 
@@ -24,8 +27,13 @@ public final class MinecraftServerExecutor implements ServerTaskExecutor {
         MinecraftServer server = instance.server;
         CompletableFuture<T> fut = server.submit(() -> {
             try { return task.call(); }
-            catch (ApiException ae) { throw ae; }
-            catch (Exception e) { throw ApiException.internal(String.valueOf(e.getMessage())); }
+            catch (ApiException ae) { throw ae; } // expected control flow (400/404/...) — don't log
+            // Throwable (not just Exception) so a stripped client-only method's NoSuchMethodError is
+            // caught, logged with a stack trace (diagnosability), and mapped to a clean 500.
+            catch (Throwable e) {
+                LOG.error("[ftbquests-bridge] backend task failed", e);
+                throw ApiException.internal(String.valueOf(e.getMessage()));
+            }
         });
         try {
             return fut.get(timeoutMs, TimeUnit.MILLISECONDS);
