@@ -129,8 +129,11 @@ public final class FtbQuestsBackend implements QuestBackend {
     @Override public JsonArray listTaskTypes()   { return exec.call(RegistryReader::taskTypes); }
     @Override public JsonArray listRewardTypes() { return exec.call(RegistryReader::rewardTypes); }
 
-    // ---- Implemented in Task 11 ----
-    @Override public JsonObject typeSchema(String k, String t) { throw ApiException.internal("not yet implemented"); }
+    // ---- Task 11: type schema introspection (writeData defaults; fields client-only -> empty) ----
+    @Override public JsonObject typeSchema(String kind, String typeId) {
+        if (!"task".equals(kind) && !"reward".equals(kind)) throw ApiException.badRequest("kind must be task|reward");
+        return exec.call(() -> TypeSchemas.schema(kind, typeId));
+    }
 
     // ---- Task 12: create / edit / delete / dependency / save (NBT-based, live broadcast) ----
     //
