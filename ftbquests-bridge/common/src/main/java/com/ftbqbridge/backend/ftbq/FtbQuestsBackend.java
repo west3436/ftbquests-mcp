@@ -7,12 +7,20 @@ import com.ftbqbridge.backend.ServerTaskExecutor;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import dev.architectury.platform.Platform;
+import dev.ftb.mods.ftblibrary.util.NetworkHelper;
+import dev.ftb.mods.ftbquests.net.CreateObjectResponseMessage;
+import dev.ftb.mods.ftbquests.net.EditObjectResponseMessage;
 import dev.ftb.mods.ftbquests.quest.Chapter;
 import dev.ftb.mods.ftbquests.quest.ChapterGroup;
 import dev.ftb.mods.ftbquests.quest.Quest;
+import dev.ftb.mods.ftbquests.quest.QuestObject;
 import dev.ftb.mods.ftbquests.quest.QuestObjectBase;
+import dev.ftb.mods.ftbquests.quest.QuestObjectType;
 import dev.ftb.mods.ftbquests.quest.ServerQuestFile;
 import dev.ftb.mods.ftbquests.quest.loot.RewardTable;
+import net.minecraft.nbt.CompoundTag;
+
+import java.util.Locale;
 
 /**
  * The single Minecraft-coupled {@link QuestBackend}. Every operation runs on the server thread via
@@ -25,7 +33,11 @@ import dev.ftb.mods.ftbquests.quest.loot.RewardTable;
  */
 public final class FtbQuestsBackend implements QuestBackend {
     private final ServerTaskExecutor exec;
-    public FtbQuestsBackend(ServerTaskExecutor exec) { this.exec = exec; }
+    private final boolean saveImmediately;
+    public FtbQuestsBackend(ServerTaskExecutor exec) { this(exec, true); }
+    public FtbQuestsBackend(ServerTaskExecutor exec, boolean saveImmediately) {
+        this.exec = exec; this.saveImmediately = saveImmediately;
+    }
 
     @Override public JsonObject health() {
         return exec.call(() -> {
@@ -117,13 +129,94 @@ public final class FtbQuestsBackend implements QuestBackend {
     @Override public JsonArray listTaskTypes()   { return exec.call(RegistryReader::taskTypes); }
     @Override public JsonArray listRewardTypes() { return exec.call(RegistryReader::rewardTypes); }
 
-    // ---- Implemented in Tasks 11-12 ----
+    // ---- Implemented in Task 11 ----
     @Override public JsonObject typeSchema(String k, String t) { throw ApiException.internal("not yet implemented"); }
-    @Override public JsonObject createObject(String t, String p, JsonObject props, JsonObject extra) { throw ApiException.internal("not yet implemented"); }
-    @Override public JsonObject editObject(String id, JsonObject props) { throw ApiException.internal("not yet implemented"); }
-    @Override public void deleteObject(String id) { throw ApiException.internal("not yet implemented"); }
-    @Override public JsonObject setDependency(String a, String b, boolean add) { throw ApiException.internal("not yet implemented"); }
-    @Override public void save() { throw ApiException.internal("not yet implemented"); }
+
+    // ---- Task 12: create / edit / delete / dependency / save (NBT-based, live broadcast) ----
+    //
+    // NOTE: title/description text is NOT carried here. On ftb-quests 2101.1.27 those live in the
+    // TranslationManager (lang files), not in writeData/readData NBT (which hold only icon/tags +
+    // type-specific config). Routing localized text through the bridge is deferred (spec spike #3).
+
+    @Override public JsonObject createObject(String type, String parent, JsonObject properties, JsonObject extra) {
+        return exec.call(() -> {
+            ServerQuestFile f = ServerQuestFile.INSTANCE;
+            QuestObjectType objType;
+            try { objType = QuestObjectType.valueOf(type.toUpperCase(Locale.ROOT)); }
+            catch (IllegalArgumentException e) { throw ApiException.badRequest("unknown object type: " + type); }
+            long parentId = (parent == null || parent.isBlank()) ? 1L : QuestSerializer.parseHex(parent);
+            CompoundTag extraNbt = QuestSerializer.jsonToNbt(extra == null ? new JsonObject() : extra);
+            QuestObjectBase o;
+            try { o = f.create(f.newID(), objType, parentId, extraNbt); }
+            catch (IllegalArgumentException e) { throw ApiException.badRequest(String.valueOf(e.getMessage())); }
+            o.readData(QuestSerializer.jsonToNbt(properties == null ? new JsonObject() : properties), f.holderLookup());
+            o.onCreated();
+            f.refreshIDMap(); f.clearCachedData(); f.markDirty();
+            NetworkHelper.sendToAll(f.server, CreateObjectResponseMessage.create(o, extraNbt));
+            persist(f);
+            return QuestSerializer.objectFull(o, f.holderLookup());
+        });
+    }
+
+    @Override public JsonObject editObject(String id, JsonObject properties) {
+        return exec.call(() -> {
+            ServerQuestFile f = ServerQuestFile.INSTANCE;
+            QuestObjectBase o = f.getBase(QuestSerializer.parseHex(id));
+            if (o == null) throw ApiException.notFound(id);
+            // Merge the patch onto the object's current writeData NBT, preserving the exact NBT types
+            // of untouched fields (only patched keys round-trip through JSON->NBT).
+            CompoundTag current = new CompoundTag();
+            o.writeData(current, f.holderLookup());
+            CompoundTag patch = QuestSerializer.jsonToNbt(properties == null ? new JsonObject() : properties);
+            for (String key : patch.getAllKeys()) current.put(key, patch.get(key));
+            o.readData(current, f.holderLookup());
+            o.editedFromGUIOnServer();
+            f.clearCachedData(); f.markDirty();
+            NetworkHelper.sendToAll(f.server, new EditObjectResponseMessage(o));
+            persist(f);
+            return QuestSerializer.objectFull(o, f.holderLookup());
+        });
+    }
+
+    @Override public void deleteObject(String id) {
+        exec.call(() -> {
+            ServerQuestFile f = ServerQuestFile.INSTANCE;
+            long oid = QuestSerializer.parseHex(id);
+            if (f.getBase(oid) == null) throw ApiException.notFound(id);
+            f.deleteObject(oid); // removes translations, deletes children/self, refreshes, markDirty, self-broadcasts
+            persist(f);
+            return null;
+        });
+    }
+
+    @Override public JsonObject setDependency(String questId, String dependsOnId, boolean add) {
+        return exec.call(() -> {
+            ServerQuestFile f = ServerQuestFile.INSTANCE;
+            Quest quest = f.getQuest(QuestSerializer.parseHex(questId));
+            if (quest == null) throw ApiException.notFound("quest " + questId);
+            QuestObjectBase dep = f.getBase(QuestSerializer.parseHex(dependsOnId));
+            if (!(dep instanceof QuestObject depObj)) throw ApiException.badRequest("dependency must be a quest object: " + dependsOnId);
+            if (add) quest.addDependency(depObj); else quest.removeDependency(depObj);
+            quest.editedFromGUIOnServer();
+            f.clearCachedData(); f.markDirty();
+            NetworkHelper.sendToAll(f.server, new EditObjectResponseMessage(quest));
+            persist(f);
+            JsonObject o = new JsonObject();
+            o.addProperty("questId", QuestSerializer.hex(quest.id));
+            o.addProperty("dependsOnId", dependsOnId);
+            o.addProperty("added", add);
+            return o;
+        });
+    }
+
+    @Override public void save() {
+        exec.call(() -> { ServerQuestFile.INSTANCE.saveNow(); return null; });
+    }
+
+    /** Persist immediately when saveMode=immediate; otherwise leave the dirty flag for an explicit /save. */
+    private void persist(ServerQuestFile f) {
+        if (saveImmediately) f.saveNow();
+    }
 
     /** Architectury's Platform exposes isFabric()/isNeoForge()/isForge() (no getModLoader() on 13.0.8). */
     private static String loaderName() {

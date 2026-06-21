@@ -1,5 +1,6 @@
 package com.ftbqbridge.backend.ftbq;
 
+import com.ftbqbridge.backend.ApiException;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.Dynamic;
@@ -30,6 +31,13 @@ public final class QuestSerializer {
     /** NBT -> Gson via DFU Dynamic conversion. */
     public static JsonElement nbtToJson(Tag tag) {
         return new Dynamic<>(NbtOps.INSTANCE, tag).convert(JsonOps.INSTANCE).getValue();
+    }
+
+    /** Gson object -> NBT CompoundTag via DFU Dynamic conversion (the write-side mirror of nbtToJson). */
+    public static CompoundTag jsonToNbt(JsonObject json) {
+        Tag t = new Dynamic<>(JsonOps.INSTANCE, (JsonElement) json).convert(NbtOps.INSTANCE).getValue();
+        if (t instanceof CompoundTag c) return c;
+        throw ApiException.badRequest("expected a JSON object");
     }
 
     public static JsonObject objectSummary(QuestObjectBase o) {
