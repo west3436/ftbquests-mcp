@@ -21,6 +21,12 @@ dependencies {
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowBundle project(path: ":common", configuration: "transformProductionNeoForge")
+
+    // Loader-specific FTB Quests at dev runtime so ServerQuestFile actually loads in runServer.
+    // (common declares the platform-agnostic API; the loader needs the real mod jar to load.)
+    // ftb-quests-neoforge transitively pulls ftb-library-neoforge + ftb-teams-neoforge via module metadata.
+    modImplementation "dev.ftb.mods:ftb-quests-neoforge:${rootProject.ftb_quests_version}"
+    modImplementation "dev.ftb.mods:ftb-library-neoforge:${rootProject.ftb_library_version}"
 }
 
 processResources {
