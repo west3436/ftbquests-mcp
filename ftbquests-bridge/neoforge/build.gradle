@@ -1,0 +1,64 @@
+plugins {
+    id "io.github.goooler.shadow" version "8.1.7"
+}
+
+architectury {
+    platformSetupLoomIde()
+    neoForge()
+}
+
+configurations {
+    common
+    shadowBundle
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentNeoForge.extendsFrom common
+}
+
+dependencies {
+    neoForge "net.neoforged:neoforge:${rootProject.neoforge_version}"
+    modApi "dev.architectury:architectury-neoforge:${rootProject.architectury_api_version}"
+
+    common(project(path: ":common", configuration: "namedElements")) { transitive false }
+    shadowBundle project(path: ":common", configuration: "transformProductionNeoForge")
+
+    // Loader-specific FTB Quests at dev runtime so ServerQuestFile actually loads in runServer.
+    // (common declares the platform-agnostic API; the loader needs the real mod jar to load.)
+    // ftb-quests-neoforge transitively pulls ftb-library-neoforge + ftb-teams-neoforge via module metadata.
+    modImplementation "dev.ftb.mods:ftb-quests-neoforge:${rootProject.ftb_quests_version}"
+    modImplementation "dev.ftb.mods:ftb-library-neoforge:${rootProject.ftb_library_version}"
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand "version": project.version
+    }
+}
+
+shadowJar {
+    configurations = [project.configurations.shadowBundle]
+    archiveClassifier = "dev-shadow"
+}
+
+remapJar {
+    input.set shadowJar.archiveFile
+    archiveClassifier = null
+    dependsOn shadowJar
+}
+
+jar {
+    archiveClassifier = "dev"
+}
+
+sourcesJar {
+    def commonSources = project(":common").sourcesJar
+    dependsOn commonSources
+    from commonSources.archiveFile.map { zipTree(it) }
+}
+
+components.java {
+    withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
+        skip()
+    }
+}

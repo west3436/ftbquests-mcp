@@ -1,0 +1,5 @@
+# Keep the Gradle wrapper script LF so ./gradlew works on Git Bash / *nix
+gradlew text eol=lf
+*.sh text eol=lf
+gradlew.bat text eol=crlf
+*.jar binary
