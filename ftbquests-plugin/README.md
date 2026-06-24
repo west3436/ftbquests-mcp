@@ -76,6 +76,28 @@ FTBQUESTS_SERVER_DIR="C:/path/to/minecraft/instance" node dist/index.js </dev/nu
 ```
 If the server connects here but the tools still don't appear in Claude Code, the variable isn't reaching Claude Code's environment — move it into `.claude/settings.local.json` `env` and restart. Also confirm `dist/` is built (`npm run build`) and the Minecraft server with the `ftbquests-bridge` mod is actually running.
 
+## Known issues / limitations
+
+Confirmed against a live NeoForge 1.21.1 server (FTB Quests 2101.x) and verified by reading state back through the bridge. These affect the tools listed below but not the rest of the authoring flow.
+
+### `ftbq_get_type_schema` errors on any namespaced type id
+
+**Symptom:** Calling `ftbq_get_type_schema` with a normal type id such as `ftbquests:item` returns:
+
+> `{"error":{"type":"internal","status":500,"message":"Non [a-z0-9/._-] character in path of location: minecraft:ftbquests%3Aitem"}}`
+
+Every FTB task/reward type id is namespaced (contains a `:`), so the tool currently fails for **all** of them.
+
+**Cause:** The MCP server percent-encodes the id into the request path (`/task-types/ftbquests%3Aitem/schema`), but the bridge builds a `ResourceLocation` from the **un-decoded** path segment, so the literal `%` is rejected. The fix is bridge-side: URL-decode the path parameter before parsing.
+
+**Workaround:** Use the field lists in `skills/ftbquests/references/task-types.md` and `reward-types.md` (e.g. an item task/reward takes `item` + `count`), and copy field shapes from a working sibling via `ftbq_get_object`. Resolve item/block/entity ids with `ftbq_search_registry`.
+
+### Deleting a `CHAPTER_GROUP` does not cascade to its chapters
+
+**Symptom:** `ftbq_delete_object <chapterGroupId>` returns `ok:true`, but the group's chapters are **not** deleted — they are silently reparented into the default group `0000000000000000`, and each reparented chapter **loses its title** (reads back as `""`, even though it round-tripped before the delete).
+
+**Workaround:** To remove a chapter and everything under it, call `ftbq_delete_object <chapterId>` directly — that **does** cascade to the chapter's quests, tasks, and rewards. Delete chapters before (or instead of) deleting their group.
+
 ## MCP registration note
 
 This plugin declares its MCP server in `.mcp.json` at the plugin root. If your Claude Code version expects MCP servers declared inside `.claude-plugin/plugin.json` instead, move the `mcpServers` block there. The MCP server must be built (`npm run build`) before first use.

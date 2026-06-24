@@ -35,7 +35,13 @@ RewardTable                 top-level; a weighted pool used by loot/random rewar
 | `REWARD` | `<questId>` | `{"type": "ftbquests:item"}` (the reward type id) |
 | `REWARD_TABLE` | `0000000000000001` | — |
 
-`properties` holds the object's own fields (title, icon, task/reward-specific fields). Discover them with `ftbq_get_type_schema` (tasks/rewards) and by reading an existing object of the same kind via `ftbq_get_object`.
+`properties` holds the object's own fields (title, icon, task/reward-specific fields). Discover task/reward fields from `task-types.md` / `reward-types.md` and by reading an existing object of the same kind via `ftbq_get_object`. (`ftbq_get_type_schema` is meant for this but is currently broken — see the plugin README's "Known issues / limitations".)
+
+## Deleting objects
+
+`ftbq_delete_object(id)` removes an object and broadcasts the change live. Deleting a **container** normally cascades to its children — deleting a `CHAPTER` removes its quests (and their tasks/rewards); deleting a `QUEST` removes its tasks/rewards.
+
+**Exception — `CHAPTER_GROUP` does not cascade.** Deleting a chapter group returns `ok:true` but does **not** delete its chapters: they are silently moved into the default group `0000000000000000`, and a reparented chapter **loses its title** (it reads back as `""`). To delete a chapter, target the `CHAPTER` id directly — that cascades correctly. See the plugin README's "Known issues / limitations".
 
 ## Quest layout fields
 
