@@ -222,7 +222,19 @@ public final class FtbQuestsBackend implements QuestBackend {
         exec.call(() -> {
             ServerQuestFile f = ServerQuestFile.INSTANCE;
             long oid = QuestSerializer.parseHex(id);
-            if (f.getBase(oid) == null) throw ApiException.notFound(id);
+            QuestObjectBase obj = f.getBase(oid);
+            if (obj == null) throw ApiException.notFound(id);
+            // FTB's ChapterGroup.deleteSelf() does NOT delete the group's chapters — it reparents
+            // them into the default group, and removeAllTranslations() on the group wipes their
+            // titles along the way. To make group deletion cascade like every other container,
+            // delete the chapters ourselves first (each cascades to its quests/tasks/rewards), then
+            // delete the now-empty group. The default group is never user-deletable, so leave it to
+            // FTB. Snapshot the list first: deleting a chapter mutates the group's live chapter list.
+            if (obj instanceof ChapterGroup group && !group.isDefaultGroup()) {
+                for (Chapter chapter : List.copyOf(group.getChapters())) {
+                    f.deleteObject(chapter.id);
+                }
+            }
             f.deleteObject(oid); // removes translations, deletes children/self, refreshes, markDirty, self-broadcasts
             persist(f);
             return null;
