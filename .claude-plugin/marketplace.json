@@ -1,0 +1,14 @@
+{
+  "name": "ftbquests-local",
+  "owner": { "name": "west3436" },
+  "metadata": {
+    "description": "Local marketplace for the ftbquests companion plugin (live-test of issue #5)."
+  },
+  "plugins": [
+    {
+      "name": "ftbquests",
+      "source": "./ftbquests-plugin",
+      "description": "Author and edit FTB Quests on a live Minecraft server via the ftbquests-bridge mod."
+    }
+  ]
+}
