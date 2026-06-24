@@ -1,8 +1,6 @@
 # Task types
 
-A task is a completion condition on a quest. Create with `ftbq_create_object` type `TASK`, `parent` = the quest id, `extra.type` = the task type id below. Use `ftbq_list_task_types` to see everything registered on the live server (packs and KubeJS can add types and change availability).
-
-> **`ftbq_get_type_schema` is currently broken** — it 500s on any namespaced type id (i.e. all of them); see the plugin README's "Known issues / limitations". Use the field names in the table below and copy the exact shape from a working sibling task via `ftbq_get_object` instead.
+A task is a completion condition on a quest. Create with `ftbq_create_object` type `TASK`, `parent` = the quest id, `extra.type` = the task type id below. **Confirm the exact field names/defaults with `ftbq_get_type_schema task <typeId>`** before creating — packs and KubeJS can add types and change availability. Use `ftbq_list_task_types` to see everything registered on the live server.
 
 ## Built-in task types
 

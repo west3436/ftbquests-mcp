@@ -23,14 +23,11 @@ You edit a **live** server through the `ftbq_*` MCP tools. Every create/edit/del
   - TASK / REWARD: `parent` = quest id, and `extra.type` = the type id (e.g. `ftbquests:item`).
 
 ## Before creating a task or reward
-Learn the type's fields from the curated `references/task-types.md` / `references/reward-types.md` field lists, and copy the exact shape from a working sibling object via `ftbq_get_object`. To find item/block/entity ids, use `ftbq_search_registry` — results are `{id, displayName}` with a localized `displayName`.
-
-> **`ftbq_get_type_schema` is currently broken.** It returns a 500 (`Non [a-z0-9/._-] character in path of location: ...%3A...`) for any namespaced type id such as `ftbquests:item` — which is all of them — because the bridge doesn't URL-decode the type id in the request path. Rely on the `references/` field lists until it's fixed (see the README's "Known issues / limitations"). When it works again, its `defaults` map — keys = serialized field names, read live from the server (pack-aware) — is the source of truth; there is **no** annotated `fields` list (FTB's per-field metadata is client-only, so `fields` is always empty).
+Call `ftbq_get_type_schema` for that type to learn its fields. The schema returns `defaults` — a sample object of the type's serialized field names + baseline values, read live from the server (pack-aware). There is **no** annotated `fields` list: FTB's per-field metadata is client-only and unavailable on a dedicated server, so `fields` is always empty. Treat `defaults` (its keys are the field names) plus the curated `references/` notes as the source of truth. To find item/block/entity ids, use `ftbq_search_registry` — results are `{id, displayName}` with a localized `displayName`.
 
 ## Discipline
 - Build in order: chapter group → chapter → quests → tasks/rewards → dependencies (`ftbq_set_dependency`) → positions (`ftbq_move_object`).
 - After a batch of edits, call `ftbq_save`.
-- Deleting a `CHAPTER_GROUP` does **not** delete its chapters — they fall back to the default group and lose their title. Delete the `CHAPTER` id directly to remove it and cascade to its quests/tasks/rewards (see `references/data-model.md`).
 - Errors come back as `{error:{type,status,message}}` — read `message` and correct your input (e.g. wrong `parent`, unknown `type`, bad field). Common types: `bad_request`, `not_found`, `quests_not_loaded`, `server_busy`.
 
 ## Safety

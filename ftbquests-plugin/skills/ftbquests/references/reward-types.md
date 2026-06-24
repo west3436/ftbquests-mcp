@@ -1,8 +1,6 @@
 # Reward types
 
-A reward is granted when a quest is completed/claimed. Create with `ftbq_create_object` type `REWARD`, `parent` = the quest id, `extra.type` = the reward type id below. Use `ftbq_list_reward_types` to see everything registered live.
-
-> **`ftbq_get_type_schema` is currently broken** — it 500s on any namespaced type id (i.e. all of them); see the plugin README's "Known issues / limitations". Use the field names in the table below and copy the exact shape from a working sibling reward via `ftbq_get_object` instead.
+A reward is granted when a quest is completed/claimed. Create with `ftbq_create_object` type `REWARD`, `parent` = the quest id, `extra.type` = the reward type id below. **Confirm fields with `ftbq_get_type_schema reward <typeId>`**; use `ftbq_list_reward_types` to see everything registered live.
 
 ## Built-in reward types
 
