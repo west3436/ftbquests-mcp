@@ -52,6 +52,7 @@ On FTB Quests 2101.x, title/subtitle/description **text is not stored in the obj
 What this means through the bridge today:
 
 - **Reads work.** `ftbq_get_quest_map` / `ftbq_get_object` return the current title (the server-safe raw title).
-- **Writes are not wired yet.** Passing `title`/`description` in `properties` is **silently ignored** — it is not part of the NBT write path, so it does not persist. (Writing text requires routing it through the TranslationManager via `setRawTitle`; that is a known pending follow-up.)
+- **Title writes work.** Passing `title` in `properties` on `ftbq_create_object` / `ftbq_edit_object` persists — the bridge routes it through the TranslationManager via `setRawTitle`. The create/edit response echoes the stored `title`.
+- **`subtitle`/`description` writes are not wired yet.** Passing them is **not silently dropped**: the create/edit response includes a `warnings` array noting they were ignored. Set them in-game for now.
 
-So do **not** rely on setting titles/descriptions through the bridge yet: the `title:` fields shown in `workflows.md` express intent but won't persist on a live server today. If a quest needs a title now, set it in-game and tell the user that bridge-side title authoring is pending. Always **read back with `ftbq_get_object`** to confirm what actually landed.
+Always **read back with `ftbq_get_object`** to confirm what actually landed, and check the response for a `warnings` array.

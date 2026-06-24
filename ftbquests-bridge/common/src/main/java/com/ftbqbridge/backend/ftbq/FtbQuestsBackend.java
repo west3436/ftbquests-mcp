@@ -5,6 +5,7 @@ import com.ftbqbridge.backend.ApiException;
 import com.ftbqbridge.backend.QuestBackend;
 import com.ftbqbridge.backend.ServerTaskExecutor;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.architectury.platform.Platform;
 import dev.ftb.mods.ftblibrary.util.NetworkHelper;
@@ -20,6 +21,8 @@ import dev.ftb.mods.ftbquests.quest.ServerQuestFile;
 import dev.ftb.mods.ftbquests.quest.loot.RewardTable;
 import net.minecraft.nbt.CompoundTag;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -141,9 +144,11 @@ public final class FtbQuestsBackend implements QuestBackend {
 
     // ---- Task 12: create / edit / delete / dependency / save (NBT-based, live broadcast) ----
     //
-    // NOTE: title/description text is NOT carried here. On ftb-quests 2101.1.27 those live in the
-    // TranslationManager (lang files), not in writeData/readData NBT (which hold only icon/tags +
-    // type-specific config). Routing localized text through the bridge is deferred (spec spike #3).
+    // Title text is NOT part of writeData/readData NBT on ftb-quests 2101.1.27 — it lives in the
+    // server-side TranslationManager, written via QuestObjectBase.setRawTitle (issue #12). The
+    // translation fields are split out of `properties` (TranslationFields) and applied separately;
+    // subtitle/description are not wired yet and are surfaced as response warnings rather than
+    // silently dropped.
 
     @Override public JsonObject createObject(String type, String parent, JsonObject properties, JsonObject extra) {
         return exec.call(() -> {
@@ -152,16 +157,39 @@ public final class FtbQuestsBackend implements QuestBackend {
             try { objType = QuestObjectType.valueOf(type.toUpperCase(Locale.ROOT)); }
             catch (IllegalArgumentException e) { throw ApiException.badRequest("unknown object type: " + type); }
             long parentId = (parent == null || parent.isBlank()) ? 1L : QuestSerializer.parseHex(parent);
-            CompoundTag extraNbt = QuestSerializer.jsonToNbt(extra == null ? new JsonObject() : extra);
+
+            JsonObject extraJson = extra == null ? new JsonObject() : extra;
+            CompoundTag extraNbt = QuestSerializer.jsonToNbt(extraJson);
+            // Issue #11: a CHAPTER's group is read by BaseQuestFile.create() as extra.getLong("group").
+            // The bridge receives the group as a hex string, which the JSON->NBT bridge stores as an
+            // NBT *string*; getLong() ignores that and the chapter silently lands in the default
+            // group. Re-encode it as the long id FTB expects.
+            String groupHex = chapterGroupHex(objType, extraJson);
+            long requestedGroup = groupHex.isBlank() ? 0L : QuestSerializer.parseHex(groupHex);
+            if (!groupHex.isBlank()) extraNbt.putLong("group", requestedGroup);
+
             QuestObjectBase o;
             try { o = f.create(f.newID(), objType, parentId, extraNbt); }
             catch (IllegalArgumentException e) { throw ApiException.badRequest(String.valueOf(e.getMessage())); }
-            o.readData(QuestSerializer.jsonToNbt(properties == null ? new JsonObject() : properties), f.holderLookup());
+
+            // Issue #12: title text lives in the TranslationManager, not readData NBT — strip the
+            // translation fields out of `properties` (readData would no-op them) and apply the title
+            // via the server-safe setRawTitle path.
+            TranslationFields text = TranslationFields.from(properties);
+            o.readData(QuestSerializer.jsonToNbt(text.remaining), f.holderLookup());
+            if (text.title != null) o.setRawTitle(text.title);
             o.onCreated();
             f.refreshIDMap(); f.clearCachedData(); f.markDirty();
             NetworkHelper.sendToAll(f.server, CreateObjectResponseMessage.create(o, extraNbt));
             persist(f);
-            return QuestSerializer.objectFull(o, f.holderLookup());
+
+            JsonObject result = QuestSerializer.objectFull(o, f.holderLookup());
+            List<String> warnings = unsupportedWarnings(text);
+            if (!groupHex.isBlank() && o instanceof Chapter ch && ch.getGroup().id != requestedGroup) {
+                warnings.add("chapter group " + groupHex + " was not found; chapter placed in the default group");
+            }
+            attachWarnings(result, warnings);
+            return result;
         });
     }
 
@@ -170,18 +198,23 @@ public final class FtbQuestsBackend implements QuestBackend {
             ServerQuestFile f = ServerQuestFile.INSTANCE;
             QuestObjectBase o = f.getBase(QuestSerializer.parseHex(id));
             if (o == null) throw ApiException.notFound(id);
+            // Title text is applied via setRawTitle, not the NBT patch (issue #12); split it out first.
+            TranslationFields text = TranslationFields.from(properties);
             // Merge the patch onto the object's current writeData NBT, preserving the exact NBT types
             // of untouched fields (only patched keys round-trip through JSON->NBT).
             CompoundTag current = new CompoundTag();
             o.writeData(current, f.holderLookup());
-            CompoundTag patch = QuestSerializer.jsonToNbt(properties == null ? new JsonObject() : properties);
+            CompoundTag patch = QuestSerializer.jsonToNbt(text.remaining);
             for (String key : patch.getAllKeys()) current.put(key, patch.get(key));
             o.readData(current, f.holderLookup());
+            if (text.title != null) o.setRawTitle(text.title);
             o.editedFromGUIOnServer();
             f.clearCachedData(); f.markDirty();
             NetworkHelper.sendToAll(f.server, new EditObjectResponseMessage(o));
             persist(f);
-            return QuestSerializer.objectFull(o, f.holderLookup());
+            JsonObject result = QuestSerializer.objectFull(o, f.holderLookup());
+            attachWarnings(result, unsupportedWarnings(text));
+            return result;
         });
     }
 
@@ -223,6 +256,31 @@ public final class FtbQuestsBackend implements QuestBackend {
     /** Persist immediately when saveMode=immediate; otherwise leave the dirty flag for an explicit /save. */
     private void persist(ServerQuestFile f) {
         if (saveImmediately) f.saveNow();
+    }
+
+    /** The requested chapter-group hex from {@code extra.group}, or "" when absent/blank/not a CHAPTER. */
+    private static String chapterGroupHex(QuestObjectType type, JsonObject extra) {
+        if (type != QuestObjectType.CHAPTER || extra == null || !extra.has("group")) return "";
+        JsonElement g = extra.get("group");
+        return g.isJsonPrimitive() ? g.getAsString().trim() : "";
+    }
+
+    /** One warning per translation field the bridge accepted but does not persist yet (issue #12). */
+    private static List<String> unsupportedWarnings(TranslationFields text) {
+        List<String> w = new ArrayList<>();
+        for (String key : text.unsupported) {
+            w.add("'" + key + "' was ignored: only 'title' text is persisted by the bridge yet "
+                    + "(FTB stores title/subtitle/description in the TranslationManager)");
+        }
+        return w;
+    }
+
+    /** Attach a {@code warnings} array to a create/edit response when anything was dropped. */
+    private static void attachWarnings(JsonObject result, List<String> warnings) {
+        if (warnings.isEmpty()) return;
+        JsonArray arr = new JsonArray();
+        for (String w : warnings) arr.add(w);
+        result.add("warnings", arr);
     }
 
     /** Architectury's Platform exposes isFabric()/isNeoForge()/isForge() (no getModLoader() on 13.0.8). */
