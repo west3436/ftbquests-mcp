@@ -25,7 +25,7 @@ This plugin is the companion to the **`ftbquests-bridge`** mod (a loopback HTTP+
 3. **Install this plugin** in Claude Code:
    ```
    /plugin marketplace add west3436/ftbquests-mcp
-   /plugin install ftbquests@ftbquests-local
+   /plugin install ftbquests@ftbquests-mcp
    ```
 4. **Point the plugin at the server — this step is required, or no `ftbq_*` tools appear.** The MCP server reads its target from the environment **at Claude Code startup**; if it finds nothing it exits immediately and registers zero tools (see [Troubleshooting](#troubleshooting-ftbq_-tools-not-loading)). Provide **one** of:
    - `FTBQUESTS_SERVER_DIR` → the server directory containing `config/ftbquests-bridge/runtime.json` (recommended — the plugin reads the port + token from `runtime.json` for you), **or**

@@ -23,7 +23,7 @@ Edits are applied through the server's own quest APIs and broadcast to connected
 
 ```
 /plugin marketplace add west3436/ftbquests-mcp
-/plugin install ftbquests@ftbquests-local
+/plugin install ftbquests@ftbquests-mcp
 ```
 
 **3. Build the MCP server and point it at your server.** In the installed plugin's `mcp-server/` folder run `npm install && npm run build`, set `FTBQUESTS_SERVER_DIR` to your Minecraft instance directory, and restart Claude Code. Full details (env vars, the SSH'd-admin setup, troubleshooting) are in the **[plugin README](ftbquests-plugin/README.md)**.

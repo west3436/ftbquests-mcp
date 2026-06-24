@@ -1,8 +1,8 @@
 {
-  "name": "ftbquests-local",
+  "name": "ftbquests-mcp",
   "owner": { "name": "west3436" },
   "metadata": {
-    "description": "Local marketplace for the ftbquests companion plugin (live-test of issue #5)."
+    "description": "Marketplace for the ftbquests companion plugin (authors FTB Quests on a live Minecraft server)."
   },
   "plugins": [
     {
