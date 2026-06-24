@@ -25,5 +25,5 @@ A task is a completion condition on a quest. Create with `ftbq_create_object` ty
 
 ## Finding ids for fields
 
-- Items/blocks/fluids/entities: `ftbq_search_registry` with `kind` = `items` | `blocks` | `fluids` | `entity_types`.
-- Advancements/biomes/structures/dimensions: query the corresponding registry kind if the bridge exposes it, or copy the id from an existing task via `ftbq_get_object`.
+- Items/blocks/fluids/entities/effects: `ftbq_search_registry` with `kind` = `items` | `blocks` | `fluids` | `entity_types` | `mob_effects`. Each result is `{id, displayName}`, where `displayName` is the localized name (e.g. `"Diamond"`) for items/blocks/entities/effects and falls back to the id for fluids — useful for confirming you picked the right id.
+- Advancements/biomes/structures/dimensions: **not** exposed as registry kinds yet — copy the id from an existing task via `ftbq_get_object`, or use a known id (e.g. `minecraft:story/mine_diamond`).

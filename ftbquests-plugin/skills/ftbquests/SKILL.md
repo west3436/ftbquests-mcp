@@ -21,7 +21,7 @@ You edit a **live** server through the `ftbq_*` MCP tools. Every create/edit/del
   - TASK / REWARD: `parent` = quest id, and `extra.type` = the type id (e.g. `ftbquests:item`).
 
 ## Before creating a task or reward
-Call `ftbq_get_type_schema` for that type to learn its fields. The schema's `defaults` are authoritative (pack-aware, read live from the server). The curated notes in `references/` are a convenience, not a substitute. To find item/block ids, use `ftbq_search_registry`.
+Call `ftbq_get_type_schema` for that type to learn its fields. The schema returns `defaults` — a sample object of the type's serialized field names + baseline values, read live from the server (pack-aware). There is **no** annotated `fields` list: FTB's per-field metadata is client-only and unavailable on a dedicated server, so `fields` is always empty. Treat `defaults` (its keys are the field names) plus the curated `references/` notes as the source of truth. To find item/block/entity ids, use `ftbq_search_registry` — results are `{id, displayName}` with a localized `displayName`.
 
 ## Discipline
 - Build in order: chapter group → chapter → quests → tasks/rewards → dependencies (`ftbq_set_dependency`) → positions (`ftbq_move_object`).
