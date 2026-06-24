@@ -24,7 +24,7 @@ export function buildTools(client: BridgeClient): ToolDef[] {
     { name: "ftbq_health", description: "Check the bridge: questsLoaded, protocol version, loader.", inputSchema: {}, handler: wrap(() => client.health()) },
 
     { name: "ftbq_search_registry",
-      description: "Search a Minecraft registry. kind: items|blocks|fluids|entity_types|mob_effects (and any extended kinds the bridge supports). Returns {id, displayName}. Use to find item/block ids for tasks/rewards.",
+      description: "Search a Minecraft registry. kind: items|blocks|fluids|entity_types|mob_effects|biomes|structures|dimensions|stats|advancements. Returns {id, displayName} (displayName is localized where available, else the id). Use to find ids for tasks/rewards.",
       inputSchema: { kind: z.string(), query: z.string().optional(), limit: z.number().int().optional(), offset: z.number().int().optional() },
       handler: wrap((a) => client.searchRegistry(a.kind, a.query, a.limit, a.offset)) },
 
