@@ -25,5 +25,15 @@ A task is a completion condition on a quest. Create with `ftbq_create_object` ty
 
 ## Finding ids for fields
 
-- Items/blocks/fluids/entities/effects: `ftbq_search_registry` with `kind` = `items` | `blocks` | `fluids` | `entity_types` | `mob_effects`. Each result is `{id, displayName}`, where `displayName` is the localized name (e.g. `"Diamond"`) for items/blocks/entities/effects and falls back to the id for fluids — useful for confirming you picked the right id.
-- Advancements/biomes/structures/dimensions: **not** exposed as registry kinds yet — copy the id from an existing task via `ftbq_get_object`, or use a known id (e.g. `minecraft:story/mine_diamond`).
+Use `ftbq_search_registry` with a `kind` (supports `query`, `limit`, `offset`). Each result is `{id, displayName}`; `displayName` is a localized name when one resolves server-side and otherwise falls back to the `id` — either way it confirms you picked the right id.
+
+| `kind` | source | `displayName` |
+|---|---|---|
+| `items`, `blocks`, `entity_types`, `mob_effects` | built-in registries | localized (e.g. `"Diamond"`) |
+| `advancements` | the server's loaded advancements | advancement title (e.g. `"Diamond!"`); recipe/hidden ones fall back to the id |
+| `fluids` | built-in registry | id |
+| `stats` | `minecraft:custom` stat ids (what `ftbquests:stat` accepts) | id |
+| `biomes`, `structures` | the server's datapack registries | id |
+| `dimensions` | the world's currently-loaded dimension ids | id |
+
+Tag-valued forms that `ftbquests:biome` and `ftbquests:structure` also accept (e.g. `#minecraft:is_forest`, `#minecraft:village`) are **not** enumerated — pass a known tag id directly. For anything else, copy an id from an existing task via `ftbq_get_object`.

@@ -127,7 +127,8 @@ public final class FtbQuestsBackend implements QuestBackend {
 
     // ---- Task 10: registry + type enumeration ----
     @Override public JsonArray searchRegistry(String kind, String query, int limit, int offset) {
-        return exec.call(() -> RegistryReader.search(kind, query, Math.min(Math.max(limit, 1), 500), Math.max(offset, 0)));
+        return exec.call(() -> RegistryReader.search(
+                ServerQuestFile.INSTANCE.server, kind, query, Math.min(Math.max(limit, 1), 500), Math.max(offset, 0)));
     }
     @Override public JsonArray listTaskTypes()   { return exec.call(RegistryReader::taskTypes); }
     @Override public JsonArray listRewardTypes() { return exec.call(RegistryReader::rewardTypes); }
