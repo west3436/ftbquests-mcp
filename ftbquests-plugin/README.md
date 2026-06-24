@@ -23,8 +23,20 @@ This plugin is the companion to the **`ftbquests-bridge`** mod (a loopback HTTP+
    npm run build
    ```
 3. **Install this plugin** in Claude Code.
-4. **Point the plugin at the server.** Set the environment variable `FTBQUESTS_SERVER_DIR` to the server directory (the one containing `config/ftbquests-bridge/runtime.json`). Alternatively set `FTBQUESTS_BRIDGE_URL` + `FTBQUESTS_BRIDGE_TOKEN` directly.
-5. **Verify** with `/ftbq-status` — it should report `questsLoaded: true` and list your chapters.
+4. **Point the plugin at the server — this step is required, or no `ftbq_*` tools appear.** The MCP server reads its target from the environment **at Claude Code startup**; if it finds nothing it exits immediately and registers zero tools (see [Troubleshooting](#troubleshooting-ftbq_-tools-not-loading)). Provide **one** of:
+   - `FTBQUESTS_SERVER_DIR` → the server directory containing `config/ftbquests-bridge/runtime.json` (recommended — the plugin reads the port + token from `runtime.json` for you), **or**
+   - `FTBQUESTS_BRIDGE_URL` + `FTBQUESTS_BRIDGE_TOKEN` → the bridge URL and bearer token directly.
+
+   Set it where Claude Code will see it. Easiest is a per-project `env` block in `.claude/settings.local.json`:
+   ```json
+   {
+     "env": {
+       "FTBQUESTS_SERVER_DIR": "C:/path/to/minecraft/instance"
+     }
+   }
+   ```
+   (or export it as an OS environment variable before launching Claude Code). **Then fully restart Claude Code** — MCP servers are spawned once at startup, so a value set mid-session has no effect until you relaunch.
+5. **Verify** with `/ftbq-status` — it should report `questsLoaded: true` and list your chapters. If the command reports the tools are missing, see [Troubleshooting](#troubleshooting-ftbq_-tools-not-loading).
 
 ### The SSH'd-admin scenario
 
@@ -44,6 +56,25 @@ Run Claude Code **on the server host** (e.g. over SSH) while connected to the sa
 - The API is **loopback-only by default** and always requires the bearer token from `runtime.json`.
 - Setting `allowRemote: true` lets non-loopback clients connect **with the token** — use only on a trusted network; it is logged loudly.
 - **Command rewards** (`ftbquests:command`) embed a server command that runs when a player claims them. The skill will confirm with you before creating one.
+
+## Troubleshooting: `ftbq_*` tools not loading
+
+**Symptom:** None of the `ftbq_*` tools are available — `/ftbq-status` can't run, the tools don't appear in the tool list, and (in newer clients) `/mcp` shows `ftbquests-bridge` as failed/disconnected. There may be **no visible error**: the plugin's skill and slash commands still load (they're static files), so the plugin *looks* installed while the MCP server is dead.
+
+**Cause:** The MCP server (`mcp-server/dist/index.js`) resolves the bridge target from the environment **at startup**. If neither `FTBQUESTS_SERVER_DIR` nor `FTBQUESTS_BRIDGE_URL`+`FTBQUESTS_BRIDGE_TOKEN` is set, it prints `[ftbquests] fatal: Cannot locate FTB Quests bridge...` to stderr and exits, registering no tools. Because the variable is read at spawn time, **setting it after Claude Code has started does nothing** until you restart.
+
+**Fix:**
+1. Set `FTBQUESTS_SERVER_DIR` (or the URL+token pair) — see [Setup step 4](#setup). The `.claude/settings.local.json` `env` block is the most reliable per-project method.
+2. **Fully quit and relaunch Claude Code.**
+3. Re-run `/ftbq-status`; it should now report `questsLoaded: true`.
+
+**Quick self-check** (does the server start with your env?) — from `mcp-server/`:
+```bash
+FTBQUESTS_SERVER_DIR="C:/path/to/minecraft/instance" node dist/index.js </dev/null
+# expect: [ftbquests] connected to bridge http://127.0.0.1:25599 (protocol 1)
+# if you instead see "[ftbquests] fatal: Cannot locate ..." the variable isn't set/visible.
+```
+If the server connects here but the tools still don't appear in Claude Code, the variable isn't reaching Claude Code's environment — move it into `.claude/settings.local.json` `env` and restart. Also confirm `dist/` is built (`npm run build`) and the Minecraft server with the `ftbquests-bridge` mod is actually running.
 
 ## MCP registration note
 

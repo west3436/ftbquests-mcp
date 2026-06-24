@@ -12,6 +12,8 @@ You edit a **live** server through the `ftbq_*` MCP tools. Every create/edit/del
 2. `ftbq_get_quest_map` — see chapter groups → chapters and reward tables.
 3. Drill in with `ftbq_get_chapter` / `ftbq_get_object`.
 
+> **If the `ftbq_*` tools aren't available at all**, the `ftbquests-bridge` MCP server didn't start — almost always because `FTBQUESTS_SERVER_DIR` (or `FTBQUESTS_BRIDGE_URL`+`FTBQUESTS_BRIDGE_TOKEN`) wasn't set when Claude Code launched. The variable is read once at startup, so tell the user to set it (a `.claude/settings.local.json` `env` block is easiest) and **fully restart Claude Code**; setting it mid-session won't bring the tools back. See the plugin README's "Troubleshooting: `ftbq_*` tools not loading".
+
 ## Core model (see references/data-model.md)
 - Hierarchy: **chapter group → chapter → quest → (tasks + rewards)**; plus **reward tables** and **quest links**.
 - **IDs are 16-char uppercase hex** strings. Top-level container id is `0000000000000001`.
