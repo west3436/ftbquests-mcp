@@ -2,6 +2,8 @@
 
 Concrete tool-call sequences. IDs shown as `<...>` are returned by the preceding create call. Always finish a batch with `ftbq_save`. Remember every change is broadcast live to connected players.
 
+> **Note — titles aren't written yet.** The `title:` fields in the examples below show intent, but title/description **text is not persisted by the bridge today** (it lives in FTB's TranslationManager, not the object NBT — see `data-model.md`). Structure (chapters, quests, tasks, rewards, dependencies, positions) is created correctly; titles must be set in-game for now. Read back with `ftbq_get_object` to confirm what landed.
+
 ## A. Build a progression chapter
 
 A 3-quest line: gather wood → craft a pickaxe → mine iron, each unlocking the next.

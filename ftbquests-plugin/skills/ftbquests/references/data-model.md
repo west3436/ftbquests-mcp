@@ -47,4 +47,11 @@ A quest's prerequisites are stored as a list of hex ids under the `dependencies`
 
 ## Titles & descriptions
 
-Quest objects support a title and (for quests) a description/subtitle. The exact place these belong — directly in `properties` vs in `extra` at create time (FTB Quests routes initial text through its translation manager) — is confirmed during mod implementation; **read back the object with `ftbq_get_object` after create** to see where the text actually landed, and edit via the same field. When in doubt, `ftbq_get_object` is the ground truth for any field's current shape and location.
+On FTB Quests 2101.x, title/subtitle/description **text is not stored in the object's serialized data** (`writeData`/`readData` NBT, which holds only icon, tags, and type-specific config). It lives in FTB's **TranslationManager** (server-side lang files), keyed by object id.
+
+What this means through the bridge today:
+
+- **Reads work.** `ftbq_get_quest_map` / `ftbq_get_object` return the current title (the server-safe raw title).
+- **Writes are not wired yet.** Passing `title`/`description` in `properties` is **silently ignored** — it is not part of the NBT write path, so it does not persist. (Writing text requires routing it through the TranslationManager via `setRawTitle`; that is a known pending follow-up.)
+
+So do **not** rely on setting titles/descriptions through the bridge yet: the `title:` fields shown in `workflows.md` express intent but won't persist on a live server today. If a quest needs a title now, set it in-game and tell the user that bridge-side title authoring is pending. Always **read back with `ftbq_get_object`** to confirm what actually landed.
