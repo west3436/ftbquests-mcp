@@ -16,8 +16,10 @@ Edits are applied through the server's own quest APIs and broadcast to connected
 
 **1. Install the bridge mod.** Download the jar for your loader from the [latest release](https://github.com/west3436/ftbquests-mcp/releases/latest) and drop it into the server's `mods/` folder (alongside FTB Quests, FTB Library, and Architectury API), then start the server once:
 
-- Fabric → `ftbquests-bridge-fabric-1.1.0.jar`
-- NeoForge → `ftbquests-bridge-neoforge-1.1.0.jar`
+- Fabric → `ftbquests-bridge-fabric-1.21.1-1.1.0.jar`
+- NeoForge → `ftbquests-bridge-neoforge-1.21.1-1.1.0.jar`
+
+Running Minecraft **1.20.1 Forge**? Use `ftbquests-bridge-forge-1.20.1-1.2.0.jar` from the [1.20.1 release](https://github.com/west3436/ftbquests-mcp/releases/tag/mc1.20.1-v1.2.0) instead; its requirements are on the [`1.20.1` branch](https://github.com/west3436/ftbquests-mcp/tree/1.20.1#requirements).
 
 **2. Install the Claude Code plugin.** In Claude Code:
 
