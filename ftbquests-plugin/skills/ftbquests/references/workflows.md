@@ -2,7 +2,7 @@
 
 Concrete tool-call sequences. IDs shown as `<...>` are returned by the preceding create call. Always finish a batch with `ftbq_save`. Remember every change is broadcast live to connected players.
 
-> **Note — titles persist; subtitles/descriptions don't yet.** The `title:` fields in the examples below are written through the bridge (it routes them to FTB's TranslationManager, not the object NBT — see `data-model.md`). `subtitle`/`description` are not wired yet: passing them returns a `warnings` entry in the create/edit response, and they must be set in-game for now. Read back with `ftbq_get_object` to confirm what landed.
+> **Note — text storage depends on the FTB Quests line.** On **FTB Quests 2001.x (1.20.1)** `title`, `subtitle`, and `description` are plain object NBT, so all three round-trip through `properties` — but the shape is per object type: a `CHAPTER` subtitle is a **list** of strings and a chapter has **no** `description`, while a `QUEST` subtitle is a string and its description is a list. Sending the wrong shape is repaired by the bridge with a `warnings` entry (a string sent as a chapter subtitle would otherwise wipe the stored one). On **FTB Quests 2101.x (1.21.1)** the `title:` fields below are routed to FTB's TranslationManager instead of the object NBT, while `subtitle`/`description` are not wired: passing them returns a `warnings` entry and they must be set in-game. See `data-model.md`. Either way, read back with `ftbq_get_object` to confirm what landed.
 
 ## A. Build a progression chapter
 

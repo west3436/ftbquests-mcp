@@ -21,7 +21,7 @@ function wrap(fn: (args: any) => Promise<unknown>): (args: any) => Promise<ToolR
 export function buildTools(client: BridgeClient): ToolDef[] {
   const idSchema = z.string().describe("16-char uppercase hex object id (e.g. 0000000000000001)");
   return [
-    { name: "ftbq_health", description: "Check the bridge: questsLoaded, protocol version, loader.", inputSchema: {}, handler: wrap(() => client.health()) },
+    { name: "ftbq_health", description: "Check the bridge: questsLoaded, protocol version, loader. The 1.20.1 Forge bridge also reports minecraftVersion and ftbQuestsVersion; the 1.21.1 bridges do not.", inputSchema: {}, handler: wrap(() => client.health()) },
 
     { name: "ftbq_search_registry",
       description: "Search a Minecraft registry. kind: items|blocks|fluids|entity_types|mob_effects|biomes|structures|dimensions|stats|advancements. Returns {id, displayName} (displayName is localized where available, else the id). Use to find ids for tasks/rewards.",
