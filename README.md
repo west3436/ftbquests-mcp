@@ -13,8 +13,8 @@ The bridge ships one source tree per Minecraft line; pick the one matching your 
 
 | Server | Bridge jar | FTB Quests | Loader deps |
 |---|---|---|---|
-| **1.20.1 Forge** | the `-forge` jar from the latest release | **2001.4.11+** (2001.x line) | + FTB Library, FTB Teams, Architectury API |
-| **1.21.1 NeoForge / Fabric** | the `-neoforge` / `-fabric` jar from the latest release | **2101.1.31+** (2101.x line) | + FTB Library, Architectury API |
+| **1.20.1 Forge** | `ftbquests-bridge-forge-1.20.1-<version>.jar` from the [1.20.1 release](https://github.com/west3436/ftbquests-mcp/releases/tag/mc1.20.1-v1.2.0) | **2001.4.11+** (2001.x line) | + FTB Library, FTB Teams, Architectury API |
+| **1.21.1 NeoForge / Fabric** | `ftbquests-bridge-neoforge-1.21.1-<version>.jar` / `-fabric-1.21.1-<version>.jar` from the [latest release](https://github.com/west3436/ftbquests-mcp/releases/latest) | **2101.1.31+** (2101.x line) | + FTB Library, Architectury API |
 
 Each jar declares its FTB Quests version range in its mod metadata, so the loader refuses to start rather than failing at runtime when the installed FTB Quests is too old.
 
@@ -22,7 +22,7 @@ You also need **Node 18+** on the machine where Claude Code runs.
 
 ## Install
 
-**1. Install the bridge mod.** Download the jar for your loader from the [latest release](https://github.com/west3436/ftbquests-mcp/releases/latest) and drop it into the server's `mods/` folder (alongside FTB Quests, FTB Library, and — on 1.20.1 — FTB Teams, plus Architectury API), then start the server once. It logs `FTB Quests Bridge listening on 127.0.0.1:25599` and writes `config/ftbquests-bridge.json` (settings: port, bind address, save mode) plus `config/ftbquests-bridge/runtime.json` (bound port and a generated bearer token) — that token is what the plugin authenticates with.
+**1. Install the bridge mod.** Download the jar for your Minecraft version and loader from the release linked in the table above and drop it into the server's `mods/` folder (alongside FTB Quests, FTB Library, and — on 1.20.1 — FTB Teams, plus Architectury API), then start the server once. It logs `FTB Quests Bridge listening on 127.0.0.1:25599` and writes `config/ftbquests-bridge.json` (settings: port, bind address, save mode) plus `config/ftbquests-bridge/runtime.json` (bound port and a generated bearer token) — that token is what the plugin authenticates with.
 
 **2. Install the Claude Code plugin.** In Claude Code:
 
