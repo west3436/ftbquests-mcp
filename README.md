@@ -1,4 +1,5 @@
 # ftbquests-mcp
+![Modrinth Version](https://img.shields.io/modrinth/v/ftb-quests-mcp)
 
 > Author and edit **FTB Quests** content on a **live** Minecraft server — straight from Claude Code.
 
