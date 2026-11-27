@@ -1,6 +1,5 @@
 architectury {
     common rootProject.enabled_platforms.split(",")
-    neoForge()
 }
 
 dependencies {
@@ -10,9 +9,9 @@ dependencies {
     modApi "dev.architectury:architectury:${rootProject.architectury_api_version}"
 
     // FTB Quests common API (the Minecraft-coupled backend compiles against this).
-    // ftb-quests transitively pulls ftb-library + ftb-teams (compile scope, via Gradle module metadata).
     modImplementation "dev.ftb.mods:ftb-quests:${rootProject.ftb_quests_version}"
     modImplementation "dev.ftb.mods:ftb-library:${rootProject.ftb_library_version}"
+    modImplementation "dev.ftb.mods:ftb-teams:${rootProject.ftb_teams_version}"
 
     testImplementation "org.junit.jupiter:junit-jupiter:5.10.2"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"

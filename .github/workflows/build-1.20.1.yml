@@ -1,13 +1,13 @@
 name: Build (1.20.1)
 
-# Path-filtered so this only runs once the 1.20.1 Forge tree exists on the branch (or in a PR to it).
+# Path-filtered to the bridge mod; the companion plugin is built and tested on the 1.21.1 branch.
 on:
   push:
     branches: ["1.20.1"]
-    paths: ["ftbquests-bridge-1.20.1/**"]
+    paths: ["ftbquests-bridge/**", ".github/workflows/build-1.20.1.yml"]
   pull_request:
     branches: ["1.20.1"]
-    paths: ["ftbquests-bridge-1.20.1/**"]
+    paths: ["ftbquests-bridge/**", ".github/workflows/build-1.20.1.yml"]
   workflow_dispatch:
 
 permissions:
@@ -15,18 +15,19 @@ permissions:
 
 jobs:
   bridge:
-    name: ftbquests-bridge-1.20.1 (Forge, JDK 17)
+    name: ftbquests-bridge 1.20.1 (Forge + Fabric)
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ftbquests-bridge-1.20.1
+        working-directory: ftbquests-bridge
     steps:
       - uses: actions/checkout@v7
 
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: "17"
+          # Gradle/Loom run on 21; the mod is compiled with --release 17 for Minecraft 1.20.1.
+          java-version: "21"
 
       # Also validates every gradle-wrapper.jar in the repo against Gradle's published checksums.
       - uses: gradle/actions/setup-gradle@v6
@@ -39,5 +40,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ftbquests-bridge-1.20.1
-          path: ftbquests-bridge-1.20.1/build/libs/*.jar
+          path: |
+            ftbquests-bridge/forge/build/libs/*.jar
+            ftbquests-bridge/fabric/build/libs/*.jar
           if-no-files-found: warn

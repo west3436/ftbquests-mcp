@@ -22,7 +22,7 @@ subprojects {
 
     repositories {
         maven { url "https://maven.architectury.dev/" }
-        maven { url "https://maven.neoforged.net/releases/" }
+        maven { url "https://maven.minecraftforge.net/" }
         maven { url "https://maven.fabricmc.net/" }
         maven { url "https://maven.ftb.dev/releases" } // FTB Quests + FTB Library + FTB Teams
         maven { url "https://maven.blamejared.com/" }   // JEI (mezz.jei) — transitive API dep of FTB Quests
@@ -39,12 +39,13 @@ subprojects {
 
     java {
         withSourcesJar()
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        // Minecraft 1.20.1 runs on Java 17.
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     tasks.withType(JavaCompile).configureEach {
         options.encoding = "UTF-8"
-        options.release = 21
+        options.release = 17
     }
 }
