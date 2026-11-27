@@ -69,7 +69,7 @@ public final class FtbQuestsBridge {
     private static VisualBackend visual() {
         VisualBackend backend = visualBackend;
         if (backend == null) {
-            throw new ApiException(503, "client_unavailable", "Quest screenshots need a NeoForge game client running the bridge");
+            throw new ApiException(503, "client_unavailable", "Quest screenshots need a game client running the bridge; a dedicated server has no screen to capture");
         }
         return backend;
     }

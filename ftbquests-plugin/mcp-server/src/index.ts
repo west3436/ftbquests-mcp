@@ -26,7 +26,7 @@ async function main() {
   }
 
   await server.connect(new StdioServerTransport());
-  const screenshots = health.clientAvailable === true ? "screenshots on" : "screenshots off (not a NeoForge game client)";
+  const screenshots = health.clientAvailable === true ? "screenshots on" : "screenshots off (not a game client)";
   process.stderr.write(`[ftbquests] connected to bridge ${target.url} (protocol ${health.protocolVersion}, ${screenshots}` +
     `${health.readOnly === true ? ", read-only" : ""})\n`);
 }

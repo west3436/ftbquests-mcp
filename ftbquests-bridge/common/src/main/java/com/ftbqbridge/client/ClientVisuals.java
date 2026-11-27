@@ -1,4 +1,4 @@
-package com.ftbqbridge.neoforge.client;
+package com.ftbqbridge.client;
 
 import com.ftbqbridge.FtbQuestsBridge;
 import com.ftbqbridge.backend.ApiException;
@@ -24,10 +24,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.RenderFrameEvent;
-import net.neoforged.neoforge.common.NeoForge;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +39,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
-/** Real FTB GUI inspection. Only PNG encoding and bounded waits occur off the client thread. */
+/**
+ * Real FTB GUI inspection. Only PNG encoding and bounded waits occur off the client thread.
+ *
+ * <p>Loader-agnostic: each loader's client bootstrap calls {@link #initialize()} on the client thread,
+ * then forwards four hooks — {@link #beforeFrame()}/{@link #afterFrame()} around
+ * {@code GameRenderer.render}, {@link #beforeTick()} at the start of each client tick, and
+ * {@link #loggingOut()} when the player leaves a world. Only a game client may load this class.
+ */
 public final class ClientVisuals implements VisualBackend {
     private static final Logger LOG = LoggerFactory.getLogger("ftbquests-bridge");
     private static final long RENDER_TIMEOUT_NS = TimeUnit.SECONDS.toNanos(12);
@@ -57,19 +60,19 @@ public final class ClientVisuals implements VisualBackend {
 
     private ClientVisuals() {}
 
-    /** Called by client setup enqueueWork, never by dedicated-server class loading. */
-    public static void initialize() {
-        if (instance != null) return;
+    /**
+     * Installs the backend (which starts the client-owned bridge) and returns it so the loader can
+     * register its hooks. Must run on the client thread; never called on a dedicated server.
+     */
+    public static synchronized ClientVisuals initialize() {
+        if (instance != null) return instance;
         ClientVisuals backend = new ClientVisuals();
         if (!backend.minecraft.isSameThread()) {
             throw new IllegalStateException("ClientVisuals.initialize must run on the client thread");
         }
-        NeoForge.EVENT_BUS.addListener(backend::beforeFrame);
-        NeoForge.EVENT_BUS.addListener(backend::afterFrame);
-        NeoForge.EVENT_BUS.addListener(backend::beforeTick);
-        NeoForge.EVENT_BUS.addListener(backend::loggingOut);
         FtbQuestsBridge.installVisualBackend(backend);
         instance = backend;
+        return backend;
     }
 
     @Override
@@ -284,12 +287,14 @@ public final class ClientVisuals implements VisualBackend {
         }
     }
 
-    private void beforeTick(ClientTickEvent.Pre event) {
+    /** Start of every client tick (client thread). */
+    public void beforeTick() {
         CaptureOperation operation = active.get();
         if (operation != null && operation.started && !operation.cleaned) validateOrFinish(operation);
     }
 
-    private void beforeFrame(RenderFrameEvent.Pre event) {
+    /** Immediately before {@code GameRenderer.render} (client thread). */
+    public void beforeFrame() {
         CaptureOperation operation = active.get();
         if (operation == null || !operation.started || operation.cleaned || !validateOrFinish(operation)) return;
         try {
@@ -403,7 +408,8 @@ public final class ClientVisuals implements VisualBackend {
         return ++operation.completedDraws >= 2;
     }
 
-    private void afterFrame(RenderFrameEvent.Post event) {
+    /** Immediately after {@code GameRenderer.render}, before the buffer swap (client thread). */
+    public void afterFrame() {
         CaptureOperation operation = active.get();
         if (operation == null || operation.cleaned || operation.screen == null || !validateOrFinish(operation)) return;
         if (!operation.drawnThisFrame) return;
@@ -489,7 +495,12 @@ public final class ClientVisuals implements VisualBackend {
     }
 
 
-    private void loggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
+    /** The player is leaving the world. Safe from any thread: hops to the client thread if needed. */
+    public void loggingOut() {
+        if (!minecraft.isSameThread()) {
+            minecraft.execute(this::loggingOut);
+            return;
+        }
         CaptureOperation operation = active.get();
         if (operation != null && operation.started && !operation.cleaned) {
             finish(operation, null, error(409, "world_changed", "Client disconnected during capture"), false);
