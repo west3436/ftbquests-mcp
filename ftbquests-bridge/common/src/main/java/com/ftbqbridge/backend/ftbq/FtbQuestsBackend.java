@@ -1,5 +1,6 @@
 package com.ftbqbridge.backend.ftbq;
 
+import com.ftbqbridge.FtbQuestsBridge;
 import com.ftbqbridge.Protocol;
 import com.ftbqbridge.backend.ApiException;
 import com.ftbqbridge.backend.QuestBackend;
@@ -58,6 +59,10 @@ public final class FtbQuestsBackend implements QuestBackend {
         o.addProperty("questsLoaded", ServerQuestFile.INSTANCE != null);
         o.addProperty("protocolVersion", Protocol.PROTOCOL_VERSION);
         o.addProperty("loader", loaderName());
+        o.addProperty("readOnly", FtbQuestsBridge.isReadOnly());
+        // True only on a game client that can screenshot the quest GUI (NeoForge); the MCP server
+        // registers the render tools only when this is set.
+        o.addProperty("clientAvailable", FtbQuestsBridge.hasVisualBackend());
         return o;
     }
 

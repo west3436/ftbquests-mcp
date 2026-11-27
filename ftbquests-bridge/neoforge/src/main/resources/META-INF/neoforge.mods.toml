@@ -6,7 +6,7 @@ license = "MIT"
 modId = "ftbqbridge"
 version = "${version}"
 displayName = "FTB Quests Bridge"
-description = "Loopback HTTP+JSON bridge for authoring FTB Quests content."
+description = "Loopback HTTP+JSON bridge for authoring FTB Quests content, with quest-book screenshots on the client."
 
 [[dependencies.ftbqbridge]]
 modId = "neoforge"
