@@ -33,6 +33,12 @@ Running Minecraft **1.20.1 Forge**? Use `ftbquests-bridge-forge-1.20.1-1.2.0.jar
 
 **4. Verify** with `/ftbq-status` — it should report `questsLoaded: true` and list your chapters.
 
+## Quest-book screenshots
+
+On a **NeoForge game client**, the bridge can also screenshot the real quest book, so Claude can look at what it built instead of reasoning about grid coordinates blind: `ftbq_render_chapter` (the whole chapter, or zoomed in) and `ftbq_render_quest` (a quest's detail panel). Put the NeoForge jar in the client's `mods/`, point `FTBQUESTS_SERVER_DIR` at the client instance, and load a world — in practice, authoring in singleplayer or on a LAN world you host. A dedicated server has no screen to capture, so the screenshot tools only appear when the bridge runs in a client; Fabric clients don't support them yet. Details are in the [plugin README](ftbquests-plugin/README.md#quest-book-screenshots).
+
+Screenshot support was contributed by [RedyRT](https://github.com/RedyRT) in [ftbquests-visual-mcp](https://github.com/RedyRT/ftbquests-visual-mcp).
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
