@@ -1,21 +1,62 @@
+import { z } from "zod";
 import type { BridgeTarget } from "./config.js";
 
 export class BridgeError extends Error {
   constructor(public status: number, public type: string, message: string) { super(message); this.name = "BridgeError"; }
 }
 
+/** Fields of GET /health that change which tools the MCP server registers. */
+export interface BridgeHealth { protocolVersion?: number; readOnly?: boolean; clientAvailable?: boolean; [key: string]: unknown }
+
+export interface RenderRequest {
+  kind: "chapter" | "quest";
+  id: string;
+  zoom?: number;
+  centerX?: number;
+  centerY?: number;
+  fit?: boolean;
+  page?: number;
+  scroll?: number;
+}
+
+// Validated so a malformed bridge reply surfaces as an error instead of a broken image block.
+const renderResultSchema = z.object({
+  image: z.object({ mimeType: z.literal("image/png"), data: z.string().min(1) }),
+  view: z.object({
+    kind: z.enum(["chapter", "quest"]),
+    id: z.string(),
+    chapterId: z.string(),
+    width: z.number().int().positive(),
+    height: z.number().int().positive(),
+  }).passthrough(),
+  restored: z.literal(true),
+});
+export type RenderResult = z.infer<typeof renderResultSchema>;
+
+/** A capture can take up to 12 s on the bridge; leave headroom, but never hang the tool call. */
+const REQUEST_TIMEOUT_MS = 30_000;
+
 export class BridgeClient {
   constructor(private target: BridgeTarget, private fetchFn: typeof fetch = fetch) {}
 
   private async req(method: string, path: string, body?: unknown): Promise<any> {
-    const res = await this.fetchFn(this.target.url + path, {
-      method,
-      headers: {
-        Authorization: `Bearer ${this.target.token}`,
-        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
-      },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-    });
+    let res: Response;
+    try {
+      res = await this.fetchFn(this.target.url + path, {
+        method,
+        headers: {
+          Authorization: `Bearer ${this.target.token}`,
+          ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+        },
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
+    } catch (e) {
+      if ((e as Error)?.name === "TimeoutError") {
+        throw new BridgeError(504, "timeout", `Bridge request ${method} ${path} took longer than ${REQUEST_TIMEOUT_MS / 1000} s`);
+      }
+      throw e;
+    }
     const text = await res.text();
     const json = text ? JSON.parse(text) : {};
     if (!res.ok) {
@@ -32,7 +73,11 @@ export class BridgeClient {
     return parts.length ? "?" + parts.join("&") : "";
   }
 
-  health() { return this.req("GET", "/health"); }
+  health(): Promise<BridgeHealth> { return this.req("GET", "/health"); }
+  clientState() { return this.req("GET", "/client/state"); }
+  async render(request: RenderRequest): Promise<RenderResult> {
+    return renderResultSchema.parse(await this.req("POST", "/client/render", request));
+  }
   searchRegistry(kind: string, query?: string, limit?: number, offset?: number) {
     return this.req("GET", `/registry/${encodeURIComponent(kind)}` + this.qs({ query, limit, offset }));
   }

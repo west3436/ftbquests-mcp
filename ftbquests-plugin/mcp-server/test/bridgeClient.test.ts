@@ -17,6 +17,16 @@ beforeAll(async () => {
       return;
     }
     if (req.url === "/save" && req.method === "POST") return send(200, { ok: true });
+    if (req.url === "/client/render" && req.method === "POST") {
+      let body = ""; req.on("data", (c) => (body += c));
+      req.on("end", () => {
+        const r = JSON.parse(body);
+        if (r.id === "BADBADBADBADBAD0") return send(200, { image: { mimeType: "image/png" }, view: {}, restored: true });
+        send(200, { image: { mimeType: "image/png", data: "iVBORw0KGgo=" },
+          view: { kind: r.kind, id: r.id, chapterId: r.id, zoom: 16, width: 640, height: 360 }, restored: true });
+      });
+      return;
+    }
     return send(404, { error: { code: 404, type: "not_found", message: "no route" } });
   });
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
@@ -44,5 +54,17 @@ describe("BridgeClient", () => {
     expect(r.id).toBe("00000000000000AA");
     expect(r.echo.type).toBe("CHAPTER");
     expect(r.echo.properties.title).toBe("Intro");
+  });
+
+  it("POSTs a render request and returns the validated capture", async () => {
+    const c = new BridgeClient({ url: base, token: "secret" });
+    const r = await c.render({ kind: "chapter", id: "0000000000000ABC", zoom: 12 });
+    expect(r.image.mimeType).toBe("image/png");
+    expect(r.view).toMatchObject({ kind: "chapter", id: "0000000000000ABC", width: 640 });
+  });
+
+  it("rejects a malformed render reply instead of passing a broken image on", async () => {
+    const c = new BridgeClient({ url: base, token: "secret" });
+    await expect(c.render({ kind: "quest", id: "BADBADBADBADBAD0" })).rejects.toThrow();
   });
 });
