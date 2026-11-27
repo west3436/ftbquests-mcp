@@ -1,4 +1,4 @@
-package com.ftbqbridge.neoforge.client;
+package com.ftbqbridge.client;
 
 import com.sun.jna.Platform;
 import com.sun.jna.Pointer;

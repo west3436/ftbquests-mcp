@@ -60,7 +60,7 @@ public final class FtbQuestsBackend implements QuestBackend {
         o.addProperty("protocolVersion", Protocol.PROTOCOL_VERSION);
         o.addProperty("loader", loaderName());
         o.addProperty("readOnly", FtbQuestsBridge.isReadOnly());
-        // True only on a game client that can screenshot the quest GUI (NeoForge); the MCP server
+        // True only on a game client (NeoForge or Fabric) that can screenshot the quest GUI; the MCP server
         // registers the render tools only when this is set.
         o.addProperty("clientAvailable", FtbQuestsBridge.hasVisualBackend());
         return o;
