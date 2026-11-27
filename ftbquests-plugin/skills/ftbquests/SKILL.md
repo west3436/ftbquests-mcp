@@ -30,6 +30,9 @@ Call `ftbq_get_type_schema` for that type to learn its fields. The schema return
 - After a batch of edits, call `ftbq_save`.
 - Errors come back as `{error:{type,status,message}}` — read `message` and correct your input (e.g. wrong `parent`, unknown `type`, bad field). Common types: `bad_request`, `not_found`, `quests_not_loaded`, `server_busy`.
 
+## Look at what you built (game clients only)
+If `ftbq_health` reports `clientAvailable: true`, you also have `ftbq_render_chapter` and `ftbq_render_quest`, which return a screenshot of the real quest book. After placing or moving a batch of quests, render the chapter and fix what you see — overlapping or cramped quests, tangled dependency lines, wrong icons (often a bad item id). Render a quest to check how its description and tasks actually display. Each screenshot costs context, so render once per batch of layout changes, not after every edit. If a render fails, `ftbq_client_state` says why (e.g. no world loaded).
+
 ## Safety
 A **command reward** (`ftbquests:command`) runs a server command when a player claims it. **Confirm with the user before creating a command reward** and show them the exact command.
 

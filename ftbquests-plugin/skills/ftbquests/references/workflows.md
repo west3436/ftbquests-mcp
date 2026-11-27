@@ -17,6 +17,7 @@ A 3-quest line: gather wood → craft a pickaxe → mine iron, each unlocking th
 5. Quest 3 `<q3>` "Mine Iron" at `x:4,y:0` — item task `minecraft:raw_iron` count 5.
 6. Wire the line: `ftbq_set_dependency { questId:"<q2>", dependsOnId:"<q1>", add:true }`, then `{ questId:"<q3>", dependsOnId:"<q2>", add:true }`.
 7. `ftbq_save`.
+8. If the screenshot tools are available: `ftbq_render_chapter { id:"<chapterId>" }`, then adjust with `ftbq_move_object` until the line reads cleanly.
 
 ## B. Import an item list as collection tasks
 
@@ -36,5 +37,5 @@ Given a list of item names, build one quest whose tasks collect each.
 
 ## Tips
 - If a create returns `bad_request`, re-check `parent` (right container?), `extra.type`/`extra.group`, and field names against `ftbq_get_type_schema` / a working sibling object.
-- Reposition with `ftbq_move_object` once the structure exists, rather than guessing coordinates up front.
+- Reposition with `ftbq_move_object` once the structure exists, rather than guessing coordinates up front — and, on a game client, check the result with `ftbq_render_chapter` (`centerX`/`centerY` + `zoom` to inspect one area).
 - Read back anything you create with `ftbq_get_object` to confirm fields landed where you expect (especially titles/descriptions).

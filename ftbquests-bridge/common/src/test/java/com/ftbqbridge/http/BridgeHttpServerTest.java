@@ -62,6 +62,22 @@ class BridgeHttpServerTest {
         HttpResponse<String> res = http.send(req("/nope").GET().build(), HttpResponse.BodyHandlers.ofString());
         assertEquals(404, res.statusCode());
     }
+    @Test void writableByDefault() throws Exception {
+        HttpResponse<String> res = http.send(req("/save").POST(HttpRequest.BodyPublishers.noBody()).build(), HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, res.statusCode(), "the 5-arg constructor must not enable read-only mode");
+    }
+    @Test void fallsBackToEphemeralPortWhenConfiguredPortIsTaken() throws Exception {
+        try (var occupant = new java.net.ServerSocket(0, 50, java.net.InetAddress.getByName("127.0.0.1"))) {
+            int taken = occupant.getLocalPort();
+            BridgeHttpServer second = new BridgeHttpServer("127.0.0.1", taken, false, TOKEN, new Router());
+            second.start();
+            try {
+                assertTrue(second.fellBackToEphemeralPort());
+                assertNotEquals(taken, second.boundPort());
+            } finally { second.stop(); }
+        }
+        assertFalse(server.fellBackToEphemeralPort(), "port 0 never counts as a fallback");
+    }
     @Test void saveCalls() throws Exception {
         int before = backend.saveCount;
         HttpResponse<String> res = http.send(req("/save").POST(HttpRequest.BodyPublishers.noBody()).build(), HttpResponse.BodyHandlers.ofString());

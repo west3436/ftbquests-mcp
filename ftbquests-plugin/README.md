@@ -46,14 +46,30 @@ This plugin is the companion to the **`ftbquests-bridge`** mod (a loopback HTTP+
 
 Run Claude Code **on the server host** (e.g. over SSH) while connected to the same server in-game. The bridge is loopback-only, so co-location means the API is reachable and the credentials file is local — and your edits appear live in your own quest book.
 
+### Quest-book screenshots
+
+When the bridge runs inside a **NeoForge game client**, the MCP server adds three tools so Claude can see the quest book it is editing:
+
+- `ftbq_render_chapter` — a chapter as the quest book draws it. With no options it fits the whole chapter; `zoom` (4–28) and `centerX`/`centerY` look closer.
+- `ftbq_render_quest` — a quest's detail panel (description, tasks, rewards); `page`/`scroll` pick part of a long description.
+- `ftbq_client_state` — whether a capture can run right now (world loaded, quests synced).
+
+To use them, author in **singleplayer** (or a LAN world you host): put the NeoForge bridge jar in the client's `mods/` and set `FTBQUESTS_SERVER_DIR` to the client instance directory. On a client the bridge starts when the game launches, so Claude Code can connect before you load a world; editing tools answer `quests_not_loaded` until you do. The tools only register when the bridge reports a client (`clientAvailable: true` in `ftbq_health`), so they never show up — or cost context — against a dedicated server, which has no screen to capture. Fabric clients don't support them yet.
+
+What to expect:
+- A capture takes over the screen for a few frames, then restores whatever you had open. Clicking or pressing a key during a capture cancels it rather than acting on the quest book.
+- If the game window is minimized, it is restored (without taking focus) for the capture and minimized again.
+- Images are scaled down to at most 1568 px on the long edge — the most a model uses — so a 4K window doesn't produce multi-MB payloads.
+
 ## Configuration (mod side: `config/ftbquests-bridge.json`)
 
 | key | default | meaning |
 |---|---|---|
 | `bindAddress` | `127.0.0.1` | interface to bind |
-| `port` | `25599` | API port |
+| `port` | `25599` | API port. If it's taken (e.g. a game client and a server on one machine both run the bridge), a free port is used instead and written to `runtime.json`. |
 | `allowRemote` | `false` | permit non-loopback clients (still requires the token) |
-| `saveMode` | `immediate` | save to disk after each edit, or `lazy` |
+| `readOnly` | `false` | reject every quest edit and hide the edit tools; reads and screenshots still work |
+| `saveMode` | `immediate` | save to disk after each edit, or `manual` |
 
 ## Security
 
@@ -75,7 +91,7 @@ Run Claude Code **on the server host** (e.g. over SSH) while connected to the sa
 **Quick self-check** (does the server start with your env?) — from `mcp-server/`:
 ```bash
 FTBQUESTS_SERVER_DIR="C:/path/to/minecraft/instance" node dist/index.js </dev/null
-# expect: [ftbquests] connected to bridge http://127.0.0.1:25599 (protocol 1)
+# expect: [ftbquests] connected to bridge http://127.0.0.1:25599 (protocol 1, screenshots on|off ...)
 # if you instead see "[ftbquests] fatal: Cannot locate ..." the variable isn't set/visible.
 ```
 If the server connects here but the tools still don't appear in Claude Code, the variable isn't reaching Claude Code's environment — move it into `.claude/settings.local.json` `env` and restart. Also confirm `dist/` is built (`npm run build`) and the Minecraft server with the `ftbquests-bridge` mod is actually running.
@@ -87,3 +103,5 @@ This plugin declares its MCP server in `.mcp.json` at the plugin root. If your C
 ## Tools
 
 `ftbq_health`, `ftbq_search_registry`, `ftbq_list_task_types`, `ftbq_list_reward_types`, `ftbq_get_type_schema`, `ftbq_get_quest_map`, `ftbq_get_chapter`, `ftbq_get_object`, `ftbq_search_quests`, `ftbq_create_object`, `ftbq_edit_object`, `ftbq_delete_object`, `ftbq_set_dependency`, `ftbq_move_object`, `ftbq_save`.
+
+On a NeoForge game client, also `ftbq_client_state`, `ftbq_render_chapter`, `ftbq_render_quest` (see [Quest-book screenshots](#quest-book-screenshots)). With `readOnly: true`, the six edit tools (`create`/`edit`/`delete`/`set_dependency`/`move`/`save`) are not registered.

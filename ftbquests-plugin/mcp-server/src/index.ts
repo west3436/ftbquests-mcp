@@ -17,7 +17,7 @@ async function main() {
   assertCompatible(health?.protocolVersion);
 
   const server = new McpServer({ name: "ftbquests-bridge", version: "1.0.0" });
-  for (const tool of buildTools(client)) {
+  for (const tool of buildTools(client, health)) {
     server.registerTool(
       tool.name,
       { description: tool.description, inputSchema: tool.inputSchema },
@@ -26,7 +26,9 @@ async function main() {
   }
 
   await server.connect(new StdioServerTransport());
-  process.stderr.write(`[ftbquests] connected to bridge ${target.url} (protocol ${health.protocolVersion})\n`);
+  const screenshots = health.clientAvailable === true ? "screenshots on" : "screenshots off (not a NeoForge game client)";
+  process.stderr.write(`[ftbquests] connected to bridge ${target.url} (protocol ${health.protocolVersion}, ${screenshots}` +
+    `${health.readOnly === true ? ", read-only" : ""})\n`);
 }
 
 main().catch((e) => {
