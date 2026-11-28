@@ -16,7 +16,7 @@ async function main() {
   });
   assertCompatible(health?.protocolVersion);
 
-  const server = new McpServer({ name: "ftbquests-bridge", version: "1.0.0" });
+  const server = new McpServer({ name: "ftbquests-bridge", version: "1.1.0" });
   for (const tool of buildTools(client, health)) {
     server.registerTool(
       tool.name,
