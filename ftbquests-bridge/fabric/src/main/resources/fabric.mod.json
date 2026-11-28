@@ -3,15 +3,21 @@
     "id": "ftbqbridge",
     "version": "${version}",
     "name": "FTB Quests Bridge",
-    "description": "Loopback HTTP+JSON bridge for authoring FTB Quests content.",
+    "description": "Loopback HTTP+JSON bridge for authoring FTB Quests content, with quest-book screenshots on the client.",
     "authors": ["west3436", "mmyddd"],
     "license": "MIT",
     "environment": "*",
     "entrypoints": {
         "main": [
             "com.ftbqbridge.fabric.FtbQuestsBridgeFabric"
+        ],
+        "client": [
+            "com.ftbqbridge.fabric.FtbQuestsBridgeFabricClient"
         ]
     },
+    "mixins": [
+        "ftbqbridge.mixins.json"
+    ],
     "depends": {
         "minecraft": "~1.20.1",
         "java": ">=17",

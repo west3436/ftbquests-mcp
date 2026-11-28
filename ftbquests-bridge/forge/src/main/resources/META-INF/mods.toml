@@ -10,7 +10,7 @@ displayName = "FTB Quests Bridge"
 # Original mod by west3436; 1.20.1 port by mmyddd.
 authors = "west3436, mmyddd"
 credits = "1.20.1 port: mmyddd"
-description = '''Loopback HTTP+JSON bridge for authoring FTB Quests content.'''
+description = '''Loopback HTTP+JSON bridge for authoring FTB Quests content, with quest-book screenshots on the client.'''
 
 [[dependencies.ftbqbridge]]
     modId = "forge"

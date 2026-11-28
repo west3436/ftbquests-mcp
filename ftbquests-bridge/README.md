@@ -18,12 +18,15 @@ An [Architectury](https://docs.architectury.dev/) multi-loader project with the 
 the 1.21.1 tree, so `git diff 1.21.1 1.20.1 -- ftbquests-bridge/common` shows only real
 version differences, and fixes can be cherry-picked between the branches:
 
-- `common/` — everything: HTTP server, router, auth, config, JSON helpers, the FTB Quests backend.
-- `forge/` — the `@Mod` entry point and `mods.toml`.
-- `fabric/` — the `ModInitializer` entry point and `fabric.mod.json`.
+- `common/` — everything: HTTP server, router, auth, config, JSON helpers, the FTB Quests backend,
+  and the quest-book screenshot code (`client/ClientVisuals`).
+- `forge/` — the `@Mod` entry point, `ClientBootstrap` (client-only event wiring) and `mods.toml`.
+- `fabric/` — the `ModInitializer` and `ClientModInitializer` entry points, a client-only
+  `GameRenderer` mixin, and `fabric.mod.json`.
 
-Each loader module only forwards server start/stop to `FtbQuestsBridge`; Forge-only and
-Fabric-only APIs (config folder, mod versions, loader name) go through Architectury's `Platform`.
+Each loader module only forwards lifecycle events: server start/stop to `FtbQuestsBridge`, and on
+a game client the frame, tick and disconnect hooks to `ClientVisuals`. Forge-only and Fabric-only
+APIs (config folder, mod versions, loader name) go through Architectury's `Platform`.
 
 ## Build
 
@@ -62,9 +65,9 @@ jars, which declare FTB Quests as a required dependency instead.
 
 ## What differs from the 1.21.1 tree
 
-The 1.20.1 tree branched from the 1.21.1 bridge at v1.1.0. The HTTP server, router, auth, config,
-JSON helpers and `QuestBackend` interface are Minecraft-free and match that version. Later
-1.21.1-only additions (quest-book screenshots, `readOnly`, port fallback) are not ported yet.
+The HTTP server, router, auth, config, JSON helpers and `QuestBackend` interface are Minecraft-free
+and identical on both trees, including `readOnly` and the fallback to a free port when 25599 is
+taken. Quest-book screenshots work on both, with the `ClientVisuals` differences listed below.
 
 | File | 1.21.1 | 1.20.1 |
 |---|---|---|
@@ -73,8 +76,10 @@ JSON helpers and `QuestBackend` interface are Minecraft-free and match that vers
 | `TypeSchemas` | `ResourceLocation.parse` | `new ResourceLocation(id)`; bare ids are normalized to `ftbquests:` on **both** trees, it is not a 2001.x quirk |
 | `RegistryReader` | `AdvancementHolder.id()` | `Advancement.getId()` over `getAllAdvancements()` (1.20.1 keeps the id on the advancement; `AdvancementHolder` arrives in 1.20.2), and a nullable `getDisplay()` |
 | `QuestTree` | `Path`-based `chapterFilename` | `String`-based (2001.x `getPath()` returns `Optional<String>`) |
-| `MinecraftServerExecutor` | awaited `future.get`, no cancellation | takes the `MinecraftServer` explicitly and interrupts the queued task on timeout (`future.cancel(true)`) — a 504 means "outcome unknown", not "nothing changed" |
-| `FtbQuestsBridge` | starts the API on server start | the same, plus a guard against a duplicate server-start event and separate handling for an unreadable config, a busy port, and an unwritable `runtime.json` |
+| `MinecraftServerExecutor` | awaited `future.get`, no cancellation | also interrupts the queued task on timeout (`future.cancel(true)`) — a 504 means "outcome unknown", not "nothing changed". Both look the server up per call, because a client-owned bridge outlives each integrated server |
+| `FtbQuestsBridge` | server-owned or client-owned lifetime, `/client/*` routes | the same, plus a guard against a duplicate server-start event and separate handling for an unreadable config, a failed bind, and an unwritable `runtime.json` |
+| `ClientVisuals` | `QuestScreen.getSelectedChapter()`, `getChapterPanelRight()`, `ViewQuestPanel.setCurrentPage(id, page)`, `QuestTheme.setFallbackQuestObject` | FTB 2001.x keeps the first three package-private, so a small `Ftb2001` helper reads `selectedChapter`, `chapterPanel` and `currentPages` reflectively (FTB's own names are not obfuscated on either loader); the theme fallback is the public static `QuestTheme.currentObject`; `Screen.mouseScrolled` has one delta, not two |
+| Frame hooks | NeoForge `RenderFrameEvent.Pre/Post`; Fabric mixin on `GameRenderer.render(DeltaTracker, boolean)` | Forge `TickEvent.RenderTickEvent` START/END; Fabric mixin on `GameRenderer.render(float, long, boolean)` |
 | Loader modules | `neoforge/` + `fabric/` | `forge/` + `fabric/` |
 
 Full-file line references for the 2001.4.11 API quirks are in the code comments.

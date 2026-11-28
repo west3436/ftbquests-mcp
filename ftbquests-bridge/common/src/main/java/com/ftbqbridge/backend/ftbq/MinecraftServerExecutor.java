@@ -25,21 +25,25 @@ import java.util.concurrent.TimeoutException;
  * not started yet; a write already running on the server thread cannot be safely unwound and will
  * usually still complete. A 504 therefore means "outcome unknown", not "nothing changed" — re-read
  * the object before retrying a mutation.
+ *
+ * <p>The server is looked up per call from {@code ServerQuestFile.INSTANCE.server} rather than held:
+ * on a game client the bridge outlives each integrated server (it starts before a world is loaded and
+ * keeps running across world switches), so a captured reference would go stale.
  */
 public final class MinecraftServerExecutor implements ServerTaskExecutor {
     private static final Logger LOG = LoggerFactory.getLogger("ftbquests-bridge");
 
-    private final MinecraftServer server;
     private final long timeoutMs;
 
-    public MinecraftServerExecutor(MinecraftServer server, long timeoutMs) {
-        this.server = server;
+    public MinecraftServerExecutor(long timeoutMs) {
         this.timeoutMs = timeoutMs;
     }
 
     @Override
     public <T> T call(Callable<T> task) {
-        if (ServerQuestFile.INSTANCE == null) throw ApiException.notLoaded();
+        ServerQuestFile file = ServerQuestFile.INSTANCE;
+        if (file == null) throw ApiException.notLoaded();
+        MinecraftServer server = file.server;
 
         CompletableFuture<T> future = server.submit(() -> {
             try {

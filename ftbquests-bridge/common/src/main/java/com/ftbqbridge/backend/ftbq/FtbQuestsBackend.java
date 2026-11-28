@@ -1,5 +1,6 @@
 package com.ftbqbridge.backend.ftbq;
 
+import com.ftbqbridge.FtbQuestsBridge;
 import com.ftbqbridge.Protocol;
 import com.ftbqbridge.backend.ApiException;
 import com.ftbqbridge.backend.QuestBackend;
@@ -73,6 +74,10 @@ public final class FtbQuestsBackend implements QuestBackend {
         o.addProperty("loader", Platform.isFabric() ? "fabric" : "forge");
         o.addProperty("minecraftVersion", Platform.getMinecraftVersion());
         o.addProperty("ftbQuestsVersion", Platform.getOptionalMod("ftbquests").map(Mod::getVersion).orElse("unknown"));
+        o.addProperty("readOnly", FtbQuestsBridge.isReadOnly());
+        // True only on a game client (Forge or Fabric) that can screenshot the quest GUI; the MCP server
+        // registers the render tools only when this is set.
+        o.addProperty("clientAvailable", FtbQuestsBridge.hasVisualBackend());
         return o;
     }
 
