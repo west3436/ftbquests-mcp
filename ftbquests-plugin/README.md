@@ -10,7 +10,7 @@ This plugin is the companion to the **`ftbquests-bridge`** mod (a loopback HTTP+
 
 ## Requirements
 
-- A Minecraft **1.21.1** server (NeoForge or Fabric) running **FTB Quests 2101.1.31+** + **FTB Library** + **Architectury API** and the **`ftbquests-bridge`** mod.
+- A Minecraft **1.21.1** server (NeoForge or Fabric) running **FTB Quests 2101.1.31+**, or a **1.20.1** server (Forge or Fabric) running **FTB Quests 2001.4.11+** and **FTB Teams** — either with **FTB Library** + **Architectury API** and the **`ftbquests-bridge`** mod for that version.
 - **Node 18+** on the machine where Claude Code runs.
 
 ## Setup
@@ -48,13 +48,13 @@ Run Claude Code **on the server host** (e.g. over SSH) while connected to the sa
 
 ### Quest-book screenshots
 
-When the bridge runs inside a **1.21.1 game client** (NeoForge or Fabric), the MCP server adds three tools so Claude can see the quest book it is editing:
+When the bridge runs inside a **game client** (1.21.1 NeoForge/Fabric, or 1.20.1 Forge/Fabric), the MCP server adds three tools so Claude can see the quest book it is editing:
 
 - `ftbq_render_chapter` — a chapter as the quest book draws it. With no options it fits the whole chapter; `zoom` (4–28) and `centerX`/`centerY` look closer.
 - `ftbq_render_quest` — a quest's detail panel (description, tasks, rewards); `page`/`scroll` pick part of a long description.
 - `ftbq_client_state` — whether a capture can run right now (world loaded, quests synced).
 
-To use them, author in **singleplayer** (or a LAN world you host): put the bridge jar for your loader in the client's `mods/` and set `FTBQUESTS_SERVER_DIR` to the client instance directory. On a client the bridge starts when the game launches, so Claude Code can connect before you load a world; editing tools answer `quests_not_loaded` until you do. The tools only register when the bridge reports a client (`clientAvailable: true` in `ftbq_health`), so they never show up — or cost context — against a dedicated server, which has no screen to capture. The 1.20.1 Forge bridge doesn't support them yet.
+To use them, author in **singleplayer** (or a LAN world you host): put the bridge jar for your loader in the client's `mods/` and set `FTBQUESTS_SERVER_DIR` to the client instance directory. On a client the bridge starts when the game launches, so Claude Code can connect before you load a world; editing tools answer `quests_not_loaded` until you do. The tools only register when the bridge reports a client (`clientAvailable: true` in `ftbq_health`), so they never show up — or cost context — against a dedicated server, which has no screen to capture. They need bridge v1.3.0 or newer on 1.20.1; on 1.21.1 they arrive in the next release after v1.1.0.
 
 What to expect:
 - A capture takes over the screen for a few frames, then restores whatever you had open. Clicking or pressing a key during a capture cancels it rather than acting on the quest book.
