@@ -12,6 +12,8 @@ public final class BridgeConfig {
     public String bindAddress = "127.0.0.1";
     public int port = 25599;
     public boolean allowRemote = false;
+    /** Opt-in: reject every quest mutation (and hide those tools from MCP). Reads and screenshots still work. */
+    public boolean readOnly = false;
     public String token = "";
     public String saveMode = "immediate";
     public long requestTimeoutMs = 10000L;
