@@ -17,8 +17,8 @@ Edits are applied through the server's own quest APIs and broadcast to connected
 
 **1. Install the bridge mod.** Download the jar for your loader from the [latest release](https://github.com/west3436/ftbquests-mcp/releases/latest) and drop it into the server's `mods/` folder (alongside FTB Quests, FTB Library, and Architectury API), then start the server once:
 
-- Fabric → `ftbquests-bridge-fabric-1.21.1-1.1.0.jar`
-- NeoForge → `ftbquests-bridge-neoforge-1.21.1-1.1.0.jar`
+- Fabric → `ftbquests-bridge-fabric-1.21.1-1.4.0.jar`
+- NeoForge → `ftbquests-bridge-neoforge-1.21.1-1.4.0.jar`
 
 Running Minecraft **1.20.1** (Forge or Fabric)? Use `ftbquests-bridge-forge-1.20.1-1.3.0.jar` or `ftbquests-bridge-fabric-1.20.1-1.3.0.jar` from the [1.20.1 release](https://github.com/west3436/ftbquests-mcp/releases/tag/mc1.20.1-v1.3.0) instead; its requirements are on the [`1.20.1` branch](https://github.com/west3436/ftbquests-mcp/tree/1.20.1#requirements).
 
@@ -35,7 +35,7 @@ Running Minecraft **1.20.1** (Forge or Fabric)? Use `ftbquests-bridge-forge-1.20
 
 ## Quest-book screenshots
 
-On a **game client** (1.21.1 NeoForge/Fabric, or 1.20.1 Forge/Fabric), the bridge can also screenshot the real quest book, so Claude can look at what it built instead of reasoning about grid coordinates blind: `ftbq_render_chapter` (the whole chapter, or zoomed in) and `ftbq_render_quest` (a quest's detail panel). Put the bridge jar for your loader in the client's `mods/`, point `FTBQUESTS_SERVER_DIR` at the client instance, and load a world — in practice, authoring in singleplayer or on a LAN world you host. A dedicated server has no screen to capture, so the screenshot tools only appear when the bridge runs in a client. They need bridge v1.3.0 or newer on 1.20.1; on 1.21.1 they arrive in the next release after v1.1.0. Details are in the [plugin README](ftbquests-plugin/README.md#quest-book-screenshots).
+On a **game client** (1.21.1 NeoForge/Fabric, or 1.20.1 Forge/Fabric), the bridge can also screenshot the real quest book, so Claude can look at what it built instead of reasoning about grid coordinates blind: `ftbq_render_chapter` (the whole chapter, or zoomed in) and `ftbq_render_quest` (a quest's detail panel). Put the bridge jar for your loader in the client's `mods/`, point `FTBQUESTS_SERVER_DIR` at the client instance, and load a world — in practice, authoring in singleplayer or on a LAN world you host. A dedicated server has no screen to capture, so the screenshot tools only appear when the bridge runs in a client. They need bridge v1.4.0 or newer on 1.21.1, or v1.3.0 or newer on 1.20.1. Details are in the [plugin README](ftbquests-plugin/README.md#quest-book-screenshots).
 
 Screenshot support was contributed by [RedyRT](https://github.com/RedyRT) in [ftbquests-visual-mcp](https://github.com/RedyRT/ftbquests-visual-mcp).
 

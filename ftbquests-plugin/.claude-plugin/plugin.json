@@ -1,6 +1,6 @@
 {
   "name": "ftbquests",
-  "version": "1.1.0",
+  "version": "1.4.0",
   "description": "Author and edit FTB Quests on a live Minecraft server via the ftbquests-bridge mod.",
   "author": { "name": "west3436" }
 }
