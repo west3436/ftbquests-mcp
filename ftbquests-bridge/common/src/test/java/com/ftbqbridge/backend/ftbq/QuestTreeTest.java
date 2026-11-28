@@ -2,7 +2,6 @@ package com.ftbqbridge.backend.ftbq;
 
 import org.junit.jupiter.api.Test;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,10 +40,19 @@ class QuestTreeTest {
     }
 
     @Test void chapterFilenameStripsFolderAndExtension() {
-        assertEquals("getting_started", QuestTree.chapterFilename(Path.of("chapters", "getting_started.snbt")));
+        // 1.20.1 exposes Chapter.getPath() as a String, not a java.nio.file.Path.
+        assertEquals("getting_started", QuestTree.chapterFilename("chapters/getting_started.snbt"));
+    }
+
+    @Test void chapterFilenameHandlesWindowsSeparators() {
+        assertEquals("getting_started", QuestTree.chapterFilename("chapters\\getting_started.snbt"));
     }
 
     @Test void chapterFilenameKeepsNamesWithoutSnbtExtension() {
-        assertEquals("odd.name", QuestTree.chapterFilename(Path.of("chapters", "odd.name")));
+        assertEquals("odd.name", QuestTree.chapterFilename("chapters/odd.name"));
+    }
+
+    @Test void chapterFilenameHandlesBareName() {
+        assertEquals("lonely", QuestTree.chapterFilename("lonely"));
     }
 }

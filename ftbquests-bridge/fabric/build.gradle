@@ -23,12 +23,13 @@ dependencies {
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowBundle project(path: ":common", configuration: "transformProductionFabric")
 
-    // Loader-specific FTB Quests at dev runtime so ServerQuestFile actually loads in runServer.
+    // Loader-specific FTB mods at dev runtime so ServerQuestFile actually loads in runServer.
     modImplementation "dev.ftb.mods:ftb-quests-fabric:${rootProject.ftb_quests_version}"
     modImplementation("dev.ftb.mods:ftb-library-fabric:${rootProject.ftb_library_version}") {
         // Optional client keybind integration, published on a maven we don't otherwise need.
         exclude group: "de.siphalor.amecs.amecs-key-modifiers"
     }
+    modImplementation "dev.ftb.mods:ftb-teams-fabric:${rootProject.ftb_teams_version}"
 }
 
 processResources {

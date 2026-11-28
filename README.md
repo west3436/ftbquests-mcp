@@ -14,8 +14,8 @@ The bridge ships one source tree per Minecraft line; pick the one matching your 
 
 | Server | Bridge jar | FTB Quests | Loader deps |
 |---|---|---|---|
-| **1.20.1 Forge** | `ftbquests-bridge-forge-1.20.1-<version>.jar` from the [1.20.1 release](https://github.com/west3436/ftbquests-mcp/releases/tag/mc1.20.1-v1.2.0) | **2001.4.11+** (2001.x line) | + FTB Library, FTB Teams, Architectury API |
-| **1.21.1 NeoForge / Fabric** | `ftbquests-bridge-neoforge-1.21.1-<version>.jar` / `-fabric-1.21.1-<version>.jar` from the [latest release](https://github.com/west3436/ftbquests-mcp/releases/latest) | **2101.1.31+** (2101.x line) | + FTB Library, Architectury API |
+| **1.20.1 Forge / Fabric** | `ftbquests-bridge-forge-1.20.1-<version>.jar` / `-fabric-1.20.1-<version>.jar` from the [1.20.1 releases](https://github.com/west3436/ftbquests-mcp/releases?q=mc1.20.1&expanded=true) | **2001.4.11+** (2001.x line) | + FTB Library, FTB Teams, Architectury API (+ Fabric API on Fabric) |
+| **1.21.1 NeoForge / Fabric** | `ftbquests-bridge-neoforge-1.21.1-<version>.jar` / `-fabric-1.21.1-<version>.jar` from the [latest release](https://github.com/west3436/ftbquests-mcp/releases/latest) | **2101.1.31+** (2101.x line) | + FTB Library, Architectury API (+ Fabric API on Fabric) |
 
 Each jar declares its FTB Quests version range in its mod metadata, so the loader refuses to start rather than failing at runtime when the installed FTB Quests is too old.
 

@@ -3,6 +3,7 @@
 build/
 run/
 *.class
+.architectury-transformer/
 
 # Node / TypeScript (companion plugin)
 node_modules/

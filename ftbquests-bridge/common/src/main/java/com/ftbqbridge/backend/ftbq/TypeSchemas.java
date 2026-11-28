@@ -19,32 +19,34 @@ import net.minecraft.resources.ResourceLocation;
 /**
  * Best-effort type schema introspection for task/reward types.
  *
- * <p>Returns {@code {typeId, kind, defaults:{...}, fields:[]}}. {@code defaults} is captured by
- * instantiating a throwaway instance of the type against a transient, UNREGISTERED parent chain
- * (group → chapter → quest, none added to the live file) and calling {@code writeData}.
+ * <p>{@code defaults} is captured by instantiating a throwaway instance against a transient,
+ * UNREGISTERED parent chain (group -> chapter -> quest, none added to the live file) and calling
+ * {@code writeData}. That yields the type's serialized field names and baseline values, which is what
+ * an authoring client needs.
  *
- * <p>The richer per-field UI metadata would come from {@code fillConfigGroup}, but that method is
- * {@code @Environment(EnvType.CLIENT)} on ftb-quests 2101.x and is STRIPPED on a dedicated
- * server — calling it throws {@code NoSuchMethodError}. So {@code fields} is always empty here and
- * the companion (Plan 2) supplies curated field docs. {@code defaults} is the server-obtainable
- * portion and is enough to learn a type's serialized field names + baseline values.
+ * <p>{@code fields} stays empty: the richer per-field metadata lives in {@code fillConfigGroup}, which is
+ * {@code @Environment(EnvType.CLIENT)} and therefore stripped on a dedicated server — calling it throws
+ * {@code NoSuchMethodError}.
  */
 public final class TypeSchemas {
     private TypeSchemas() {}
 
-    /** Fixed id for throwaway objects: never registered, and avoids {@code newID()}'s markDirty side effect. */
+    /** Fixed id for throwaway objects: never registered, and avoids newID()'s markDirty side effect. */
     private static final long THROWAWAY_ID = 1L;
 
     public static JsonObject schema(String kind, String typeId) {
         ServerQuestFile f = ServerQuestFile.INSTANCE;
         if (f == null) throw ApiException.notLoaded();
-        ResourceLocation rl = ResourceLocation.parse(typeId);
+        // Accept FTB's own short form ("item") as well as the namespaced id ("ftbquests:item").
+        // This is not version-specific: FTB registers its types under the ftbquests namespace on both
+        // the 2001.x and 2101.x lines, so a bare name has to be defaulted the same way on either tree.
+        String fullTypeId = typeId.indexOf(':') < 0 ? "ftbquests:" + typeId : typeId;
+        ResourceLocation rl = new ResourceLocation(fullTypeId);
 
         JsonObject out = new JsonObject();
         out.addProperty("typeId", typeId);
         out.addProperty("kind", kind);
 
-        // Transient, unregistered parent chain — nothing is added to the live file, so no mutation.
         ChapterGroup group = new ChapterGroup(THROWAWAY_ID, f);
         Chapter chapter = new Chapter(THROWAWAY_ID, f, group);
         Quest quest = new Quest(THROWAWAY_ID, chapter);
@@ -65,14 +67,14 @@ public final class TypeSchemas {
         JsonObject defaults = new JsonObject();
         try {
             CompoundTag tag = new CompoundTag();
-            instance.writeData(tag, f.holderLookup());
+            instance.writeData(tag);
             JsonElement el = QuestSerializer.nbtToJson(tag);
             if (el.isJsonObject()) defaults = el.getAsJsonObject();
         } catch (Throwable ignored) {
             // Some types touch live context in writeData; degrade to empty defaults rather than failing.
         }
         out.add("defaults", defaults);
-        out.add("fields", new JsonArray()); // fillConfigGroup is @Environment(CLIENT) — not introspectable server-side
+        out.add("fields", new JsonArray());
         out.addProperty("fieldsNote",
                 "per-field config metadata is client-only on a dedicated server; use defaults + curated docs");
         return out;

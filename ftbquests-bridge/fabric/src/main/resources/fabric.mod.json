@@ -4,6 +4,7 @@
     "version": "${version}",
     "name": "FTB Quests Bridge",
     "description": "Loopback HTTP+JSON bridge for authoring FTB Quests content.",
+    "authors": ["west3436", "mmyddd"],
     "license": "MIT",
     "environment": "*",
     "entrypoints": {
@@ -12,10 +13,10 @@
         ]
     },
     "depends": {
-        "minecraft": "~1.21.1",
-        "java": ">=21",
+        "minecraft": "~1.20.1",
+        "java": ">=17",
         "fabric-api": "*",
-        "architectury": "*",
+        "architectury": ">=9.0.8",
         "ftbquests": ">=${ftbQuestsMinVersion}"
     }
 }
